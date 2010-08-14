@@ -1,0 +1,9 @@
+Rewrite of transitfeed
+
+>>> import transitfeed
+>>> schedule = transitfeed.load( "bart.zip", dbname="bart.db" )
+>>> schedule.routes
+... blah blah
+>>> schedule2 = transitfeed.load( "bart.db" )
+>>> schedule2.routes
+... blah blah
