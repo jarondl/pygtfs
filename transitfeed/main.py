@@ -125,6 +125,23 @@ class Route(GTFSEntity):
   def __repr__(self):
     return "<Route %s>"%self.route_id
 
+class Stop(GTFSEntity):
+  TABLENAME = "stops"
+  FIELDS = (('stop_id',str),
+            ('stop_code',str),
+	    ('stop_name',str),
+	    ('stop_desc',str),
+	    ('stop_lat',str),
+	    ('stop_lon',str),
+	    ('zone_id',str),
+	    ('stop_url',str),
+	    ('location_type',str),
+	    ('parent_station',str))
+  ID_FIELD = "stop_id"
+
+  def __repr__(self):
+    return "<Stop %s>"%self.stop_id
+
 class Trip(GTFSEntity):
   TABLENAME = "trips"
   FIELDS = (('route_id',make_gtfs_foreign_key_class(Route)),
@@ -145,7 +162,7 @@ class StopTime(GTFSEntity):
   FIELDS = (('trip_id',make_gtfs_foreign_key_class(Trip)),
             ('arrival_time',str),
 	    ('departure_time',str),
-	    ('stop_id',str),
+	    ('stop_id',make_gtfs_foreign_key_class(Stop)),
 	    ('stop_sequence',int),
 	    ('stop_headsign',str),
 	    ('pickup_type',str),
@@ -187,6 +204,7 @@ calendar_table = table_def_from_entity( ServicePeriod, metadata )
 calendar_dates_table = table_def_from_entity( ServiceException, metadata )
 fare_attributes_table = table_def_from_entity( Fare, metadata )
 fare_rules_table = table_def_from_entity( FareRule, metadata )
+stops_table = table_def_from_entity( Stop, metadata )
 
 class Record(object):
   def __init__(self,header,row):
@@ -245,13 +263,15 @@ def load(session):
   feed = Feed( "/home/brandon/Desktop/bart.zip" )
 
   for gtfs_class in (Agency, 
-                     #Route, 
-		     #Trip, 
-		     #StopTime,
-		     #ServicePeriod, 
-		     #ServiceException, 
+                     Route, 
+		     Stop,
+		     Trip, 
+		     StopTime,
+		     ServicePeriod, 
+		     ServiceException, 
 		     Fare,
-		     FareRule):
+		     FareRule
+		     ):
 
     print "loading %s"%gtfs_class
     
@@ -278,25 +298,25 @@ def query(session):
 
   #print counts
 
-  #for route in session.query(Route):
-  #print route
+  for route in session.query(Route).filter(Route.route_id=='01'):
+    trip = route.trips[0]
+    for stop_time in trip.stop_times:
+      print stop_time.stop
+      print stop_time.stop.stop_lat, stop_time.stop.stop_lon
 
   #for cal in session.query(ServicePeriod):
   #  print cal
   #  print cal.exceptions
 
-  for fare in session.query(Fare):
-    print fare
-    for rule in fare.rules:
-      print "  "+repr(rule)
 
 if __name__=='__main__':
   engine = create_engine('sqlite:////home/brandon/Desktop/test.db', echo=False)
   metadata.create_all(engine) 
   mapper(Agency, agency_table, properties={'routes':relationship(Route)}) 
-  mapper(Route, routes_table, properties={'agency':relationship(Agency),'trips':relationship(Trip)})
+  mapper(Route, routes_table, properties={'agency':relationship(Agency),'trips':relationship(Trip),'fare_rules':relationship(FareRule)})
+  mapper(Stop, stops_table)
   mapper(Trip, trips_table, properties={'route':relationship(Route),'stop_times':relationship(StopTime),'service_period':relationship(ServicePeriod)})
-  mapper(StopTime, stop_times_table, properties={'trip':relationship(Trip)})
+  mapper(StopTime, stop_times_table, properties={'trip':relationship(Trip),'stop':relationship(Stop)})
   mapper(ServicePeriod, calendar_table,properties={'trips':relationship(Trip),'exceptions':relationship(ServiceException)})
   mapper(ServiceException, calendar_dates_table, properties={'calendar':relationship(ServicePeriod)})
   mapper(Fare, fare_attributes_table, properties={'rules':relationship(FareRule)})
