@@ -179,7 +179,7 @@ metadata = MetaData()
 agency_table = table_def_from_entity( Agency, metadata )
 routes_table = table_def_from_entity( Route, metadata )
 trips_table = table_def_from_entity( Trip, metadata )
-stoptimes_table = table_def_from_entity( StopTime, metadata )
+stop_times_table = table_def_from_entity( StopTime, metadata )
 calendar_table = table_def_from_entity( ServicePeriod, metadata )
 calendar_dates_table = table_def_from_entity( ServiceException, metadata )
 fare_attributes_table = table_def_from_entity( FareAttribute, metadata )
@@ -270,7 +270,7 @@ def query(session):
   #  for route in agency.routes:
   #    print route
   #    for trip in route.trips:
-  #      for st1, st2 in cons(trip.stoptimes):
+  #      for st1, st2 in cons(trip.stop_times):
   #	  counts[(st1.stop_id,st2.stop_id)] = counts.get((st1.stop_id,st2.stop_id),0)+1
 
   #print counts
@@ -287,8 +287,8 @@ if __name__=='__main__':
   metadata.create_all(engine) 
   mapper(Agency, agency_table, properties={'routes':relationship(Route)}) 
   mapper(Route, routes_table, properties={'agency':relationship(Agency),'trips':relationship(Trip)})
-  mapper(Trip, trips_table, properties={'route':relationship(Route),'stoptimes':relationship(StopTime),'serviceperiod':relationship(ServicePeriod)})
-  mapper(StopTime, stoptimes_table, properties={'trip':relationship(Trip)})
+  mapper(Trip, trips_table, properties={'route':relationship(Route),'stop_times':relationship(StopTime),'service_period':relationship(ServicePeriod)})
+  mapper(StopTime, stop_times_table, properties={'trip':relationship(Trip)})
   mapper(ServicePeriod, calendar_table,properties={'trips':relationship(Trip),'exceptions':relationship(ServiceException)})
   mapper(ServiceException, calendar_dates_table, properties={'calendar':relationship(ServicePeriod)})
   mapper(FareAttribute, fare_attributes_table)
