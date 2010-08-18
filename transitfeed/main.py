@@ -48,6 +48,8 @@ def table_def_from_entity(entity_class, metadata):
       columns.append( Column( field_name,
                               sqlalchemy_types[field_type],
                               primary_key=(field_name==entity_class.ID_FIELD) ) )
+  if entity_class.ID_FIELD is None:
+    columns.append( Column( "id", Integer, primary_key=True ) )
   
   return Table( entity_class.TABLENAME, metadata, *columns )
 
@@ -66,6 +68,40 @@ class Agency(GTFSEntity):
 
   def __repr__(self):
     return "<Agency %s>"%self.agency_id
+
+class ServicePeriod(GTFSEntity):
+  TABLENAME = "calendar"
+  FIELDS = (('service_id', str),
+            ('monday', int),
+	    ('tuesday', int),
+	    ('wednesday', int),
+	    ('thursday', int),
+	    ('friday', int),
+	    ('saturday', int),
+	    ('sunday', int),
+	    ('start_date', str),
+	    ('end_date',str))
+  ID_FIELD = "service_id"
+
+  def __repr__(self):
+    return "<ServicePeriod %s %s%s%s%s%s%s%s>"%(self.service_id,
+                                           self.monday,
+					   self.tuesday,
+					   self.wednesday,
+					   self.thursday,
+					   self.friday,
+					   self.saturday,
+					   self.sunday)
+
+class ServiceException(GTFSEntity):
+  TABLENAME = "calendar_dates"
+  FIELDS = (('service_id', make_gtfs_foreign_key_class(ServicePeriod)),
+            ('date', str),
+	    ('exception_type', str))
+  ID_FIELD = None
+
+  def __repr__(self):
+    return "<ServiceException %s %s>"%(self.date, self.exception_type)
 
 class Route(GTFSEntity):
   TABLENAME = "routes"
@@ -86,7 +122,7 @@ class Route(GTFSEntity):
 class Trip(GTFSEntity):
   TABLENAME = "trips"
   FIELDS = (('route_id',make_gtfs_foreign_key_class(Route)),
-            ('service_id',str),
+            ('service_id',make_gtfs_foreign_key_class(ServicePeriod)),
 	    ('trip_id',str),
 	    ('trip_headsign',str),
 	    ('trip_short_name',str),
@@ -98,10 +134,41 @@ class Trip(GTFSEntity):
   def __repr__(self):
     return "<Trip %s>"%self.trip_id
 
+class StopTime(GTFSEntity):
+  TABLENAME = "stop_times"
+  FIELDS = (('trip_id',make_gtfs_foreign_key_class(Trip)),
+            ('arrival_time',str),
+	    ('departure_time',str),
+	    ('stop_id',str),
+	    ('stop_sequence',int),
+	    ('stop_headsign',str),
+	    ('pickup_type',str),
+	    ('drop_off_type',str),
+	    ('shape_dist_traveled',str))
+  ID_FIELD = None
+  
+  def __repr__(self):
+    return "<StopTime %s %s>"%(self.trip_id,self.departure_time)
+
+class FareAttributes(GTFSEntity):
+  TABLENAME = "fare_attributes"
+  FIELDS = (('fare_id',str),
+            ('price',str),
+	    ('currency_type',str),
+	    ('payment_method',str),
+	    ('transfers',int),
+	    ('transfer_duration',str))
+  ID_FIELD = 'fare_id'
+
+
 metadata = MetaData()
 agency_table = table_def_from_entity( Agency, metadata )
 routes_table = table_def_from_entity( Route, metadata )
 trips_table = table_def_from_entity( Trip, metadata )
+stoptimes_table = table_def_from_entity( StopTime, metadata )
+calendar_table = table_def_from_entity( ServicePeriod, metadata )
+calendar_dates_table = table_def_from_entity( ServiceException, metadata )
+fare_attributes_table = table_def_from_entity( FareAttributes, metadata )
 
 class Record(object):
   def __init__(self,header,row):
@@ -158,37 +225,59 @@ class Feed(object):
 def load(session):
 
   feed = Feed( "/home/brandon/Desktop/bart.zip" )
-  agency_table = feed.get_table( "agency.txt" )
 
-  for record in feed.get_table( "agency.txt" ):
-    agency = Agency( **record.to_dict() )
-    session.add( agency )
+  for gtfs_class in (Agency, 
+                     #Route, 
+		     #Trip, 
+		     #StopTime,
+		     #ServicePeriod, 
+		     #ServiceException, 
+		     FareAttributes):
 
-  for record in feed.get_table( "routes.txt" ):
-    route = Route( **record.to_dict() )
-    session.add( route )
+    print "loading %s"%gtfs_class
+    
+    for record in feed.get_table( gtfs_class.TABLENAME+".txt" ):
+      instance = gtfs_class( **record.to_dict() )
+      session.add( instance )
 
-  for record in feed.get_table( "trips.txt" ):
-    trip = Trip( **record.to_dict() )
-    session.add( trip )
-
+  print "commit"
   session.commit()
 
+def cons(ary):
+  for i in range(len(ary)-1):
+    yield ary[i],ary[i-1]
+
 def query(session):
-  for agency in session.query(Agency).filter(Agency.agency_id=="BART"):
-    print agency.routes[0].trips
+  counts = {}
+
+  #for agency in session.query(Agency).filter(Agency.agency_id=="BART"):
+  #  for route in agency.routes:
+  #    print route
+  #    for trip in route.trips:
+  #      for st1, st2 in cons(trip.stoptimes):
+  #	  counts[(st1.stop_id,st2.stop_id)] = counts.get((st1.stop_id,st2.stop_id),0)+1
+
+  #print counts
 
   #for route in session.query(Route):
-  #  print route
+  #print route
+
+  for cal in session.query(ServicePeriod):
+    print cal
+    print cal.exceptions
 
 if __name__=='__main__':
-  engine = create_engine('sqlite:////home/brandon/Desktop/test.db', echo=True)
+  engine = create_engine('sqlite:////home/brandon/Desktop/test.db', echo=False)
   metadata.create_all(engine) 
   mapper(Agency, agency_table, properties={'routes':relationship(Route)}) 
   mapper(Route, routes_table, properties={'agency':relationship(Agency),'trips':relationship(Trip)})
-  mapper(Trip, trips_table, properties={'route':relationship(Route)})
+  mapper(Trip, trips_table, properties={'route':relationship(Route),'stoptimes':relationship(StopTime),'serviceperiod':relationship(ServicePeriod)})
+  mapper(StopTime, stoptimes_table, properties={'trip':relationship(Trip)})
+  mapper(ServicePeriod, calendar_table,properties={'trips':relationship(Trip),'exceptions':relationship(ServiceException)})
+  mapper(ServiceException, calendar_dates_table, properties={'calendar':relationship(ServicePeriod)})
+  mapper(FareAttributes, fare_attributes_table)
   Session = sessionmaker(bind=engine)
   session = Session()
 
-  #load(session)
-  query(session)
+  load(session)
+  #query(session)
