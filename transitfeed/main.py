@@ -34,7 +34,13 @@ class GTFSEntity(object):
   def __init__(self, **kwargs):
     for attrname, attrtype in self.FIELDS:
       if attrname in kwargs:
-        setattr( self, attrname, attrtype( kwargs[attrname] ) )
+        attrvaluestr = kwargs[attrname]
+	if attrvaluestr == '':
+	  attrvalue = None
+	else:
+	  attrvalue = attrtype( attrvaluestr )
+
+        setattr( self, attrname, attrvalue )
 
 
 def table_def_from_entity(entity_class, metadata):
@@ -150,7 +156,7 @@ class StopTime(GTFSEntity):
   def __repr__(self):
     return "<StopTime %s %s>"%(self.trip_id,self.departure_time)
 
-class FareAttributes(GTFSEntity):
+class FareAttribute(GTFSEntity):
   TABLENAME = "fare_attributes"
   FIELDS = (('fare_id',str),
             ('price',str),
@@ -160,6 +166,14 @@ class FareAttributes(GTFSEntity):
 	    ('transfer_duration',str))
   ID_FIELD = 'fare_id'
 
+class FareRule(GTFSEntity):
+  TABLENAME = "fare_rules"
+  FIELDS = (('fare_id',make_gtfs_foreign_key_class(FareAttribute)),
+            ('route_id',make_gtfs_foreign_key_class(Route)),
+	    ('origin_id',str),
+	    ('destination_id',str),
+	    ('contains_id',str))
+  ID_FIELD = None
 
 metadata = MetaData()
 agency_table = table_def_from_entity( Agency, metadata )
@@ -168,7 +182,8 @@ trips_table = table_def_from_entity( Trip, metadata )
 stoptimes_table = table_def_from_entity( StopTime, metadata )
 calendar_table = table_def_from_entity( ServicePeriod, metadata )
 calendar_dates_table = table_def_from_entity( ServiceException, metadata )
-fare_attributes_table = table_def_from_entity( FareAttributes, metadata )
+fare_attributes_table = table_def_from_entity( FareAttribute, metadata )
+fare_rules_table = table_def_from_entity( FareRule, metadata )
 
 class Record(object):
   def __init__(self,header,row):
@@ -232,7 +247,8 @@ def load(session):
 		     #StopTime,
 		     #ServicePeriod, 
 		     #ServiceException, 
-		     FareAttributes):
+		     FareAttribute,
+		     FareRule):
 
     print "loading %s"%gtfs_class
     
@@ -275,7 +291,8 @@ if __name__=='__main__':
   mapper(StopTime, stoptimes_table, properties={'trip':relationship(Trip)})
   mapper(ServicePeriod, calendar_table,properties={'trips':relationship(Trip),'exceptions':relationship(ServiceException)})
   mapper(ServiceException, calendar_dates_table, properties={'calendar':relationship(ServicePeriod)})
-  mapper(FareAttributes, fare_attributes_table)
+  mapper(FareAttribute, fare_attributes_table)
+  mapper(FareRule, fare_rules_table)
   Session = sessionmaker(bind=engine)
   session = Session()
 
