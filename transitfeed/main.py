@@ -6,9 +6,27 @@ import os
 from codecs import iterdecode
 from zipfile import ZipFile
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
+class GTFSField(object):
+  def __init__(self, fieldtype):
+    self.fieldtype = fieldtype
+
+class GTFSEntity(object):
+  def __init__(self):
+    pass
+
+  @classmethod
+  def fields(cls):
+    print cls.__dict__
+
+    for name,attr in cls.__dict__.items():
+      if isinstance( attr, GTFSField ):
+        yield( name, attr )
+
+  def __init__(self, **kwargs):
+    for attrname, attrtype in self.FIELDS:
+      if attrname in kwargs:
+        setattr( self, attrname, attrtype( kwargs[attrname] ) )
 
 metadata = MetaData()
 agency_table = Table('agency', metadata,
@@ -20,35 +38,40 @@ agency_table = Table('agency', metadata,
     Column('agency_phone', String)
 )
 
-class Agency(Base):
+def table_def_from_entity(entity_class, metadata):
+  sqlalchemy_types = {str:String,int:Integer}
+  columns = []
+  for field_name,field_type in entity_class.FIELDS:
+    columns.append( Column( field_name,
+                            sqlite_types[field_type],
+			    primary_key=(field_name==entity_class.ID_FIELD) ) )
 
-   agency_id = Column(String, primary_key=True)
-   agency_name = Column(String)
-   agency_url = Column(String)
-   agency_timezone = Column(String)
-   agency_lang = Column(String)
-   agency_phone = Column(String)
+  return Table( entity_class.TABLENAME, metadata, *columns )
+    
 
-  def __init__(self, agency_id,
-                       agency_name,
-		       agency_url,
-		       agency_timezone,
-		       agency_lang,
-		       agency_phone):
-    self.agency_id = agency_id
-    self.agency_name = agency_name
-    self.agency_url = agency_url
-    self.agency_timezone = agency_timezone
-    self.agency_lang = agency_lang
-    self.agency_phone = agency_phone
+class Agency(GTFSEntity):
+  TABLENAME = "agency"
+  FIELDS = (('agency_id',str),
+            ('agency_name',str),
+	    ('agency_url',str),
+	    ('agency_timezone',str),
+	    ('agency_lang',str),
+	    ('agency_phone',str))
+  ID_FIELD = "agency_id"
+
+  def __init__(self, **kwargs):
+    GTFSEntity.__init__(self, **kwargs)
 
 class Record(object):
   def __init__(self,header,row):
     self.header = header
     self.row = [x.strip() for x in row.split(",")]
 
+  def to_dict(self):
+    return dict([(fieldname,self.row[fieldindex]) for fieldname,fieldindex in self.header.items()])
+
   def __repr__(self):
-    return repr(dict(zip(self.header.keys(), self.row)))
+    return repr(self.to_dict())
 
   def __getitem__(self,name):
     try:
@@ -99,14 +122,10 @@ if __name__=='__main__':
   session = Session()
 
   feed = Feed( "/home/brandon/Desktop/bart.zip" )
+  agency_table = feed.get_table( "agency.txt" )
 
   for record in feed.get_table( "agency.txt" ):
-    agency = Agency( record['agency_id'],
-                     record['agency_name'],
-		     record['agency_url'],
-		     record['agency_timezone'],
-		     record['agency_lang'],
-		     record['agency_phone'] )
+    agency = Agency( **record.to_dict() )
     session.add( agency )
 
   session.commit()
