@@ -195,6 +195,15 @@ class FareRule(GTFSEntity):
 	    ('contains_id',str))
   ID_FIELD = None
 
+class ShapePoint(GTFSEntity):
+  TABLENAME = "shapes"
+  FIELDS = (('shape_id',str),
+            ('shape_pt_lat',str),
+	    ('shape_pt_lon',str),
+	    ('shape_pt_sequence',int),
+	    ('shape_dist_traveled',str))
+  ID_FIELD = None
+
 metadata = MetaData()
 agency_table = table_def_from_entity( Agency, metadata )
 routes_table = table_def_from_entity( Route, metadata )
@@ -205,6 +214,7 @@ calendar_dates_table = table_def_from_entity( ServiceException, metadata )
 fare_attributes_table = table_def_from_entity( Fare, metadata )
 fare_rules_table = table_def_from_entity( FareRule, metadata )
 stops_table = table_def_from_entity( Stop, metadata )
+shapes_table = table_def_from_entity( ShapePoint, metadata )
 
 class Record(object):
   def __init__(self,header,row):
@@ -263,14 +273,15 @@ def load(session):
   feed = Feed( "/home/brandon/Desktop/bart.zip" )
 
   for gtfs_class in (Agency, 
-                     Route, 
-		     Stop,
-		     Trip, 
-		     StopTime,
-		     ServicePeriod, 
-		     ServiceException, 
-		     Fare,
-		     FareRule
+                     #Route, 
+		     #Stop,
+		     #Trip, 
+		     #StopTime,
+		     #ServicePeriod, 
+		     #ServiceException, 
+		     #Fare,
+		     #FareRule,
+		     ShapePoint,
 		     ):
 
     print "loading %s"%gtfs_class
@@ -321,8 +332,9 @@ if __name__=='__main__':
   mapper(ServiceException, calendar_dates_table, properties={'calendar':relationship(ServicePeriod)})
   mapper(Fare, fare_attributes_table, properties={'rules':relationship(FareRule)})
   mapper(FareRule, fare_rules_table, properties={'fare':relationship(Fare),'route':relationship(Route)})
+  mapper(ShapePoint, shapes_table)
   Session = sessionmaker(bind=engine)
   session = Session()
 
-  #load(session)
-  query(session)
+  load(session)
+  #query(session)
