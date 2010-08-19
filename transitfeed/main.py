@@ -6,6 +6,7 @@ import os
 from codecs import iterdecode
 from zipfile import ZipFile
 from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.sql.expression import ColumnElement
 
 class GTFSForeignKey(str):
   pass
@@ -215,6 +216,14 @@ class Frequency(GTFSEntity):
   def __repr__(self):
     return "<Frequency %s-%s %s>"%(self.start_time,self.end_time,self.headway_secs)
 
+class Transfer(GTFSEntity):
+  TABLENAME = "transfers"
+  FIELDS = (('from_stop_id',make_gtfs_foreign_key_class(Stop)),
+            ('to_stop_id',make_gtfs_foreign_key_class(Stop)),
+	    ('transfer_type',int),
+	    ('min_transfer_time',str))
+  ID_FIELD = None
+
 metadata = MetaData()
 agency_table = table_def_from_entity( Agency, metadata )
 routes_table = table_def_from_entity( Route, metadata )
@@ -227,6 +236,7 @@ fare_rules_table = table_def_from_entity( FareRule, metadata )
 stops_table = table_def_from_entity( Stop, metadata )
 shapes_table = table_def_from_entity( ShapePoint, metadata )
 frequencies_table = table_def_from_entity( Frequency, metadata )
+transfers_table = table_def_from_entity( Transfer, metadata )
 
 class Record(object):
   def __init__(self,header,row):
@@ -286,7 +296,7 @@ def load(session):
 
   for gtfs_class in (Agency, 
                      #Route, 
-		     #Stop,
+		     Stop,
 		     Trip, 
 		     #StopTime,
 		     #ServicePeriod, 
@@ -295,6 +305,7 @@ def load(session):
 		     #FareRule,
 		     #ShapePoint,
 		     Frequency,
+		     Transfer,
 		     ):
 
     print "loading %s"%gtfs_class
@@ -328,10 +339,14 @@ def query(session):
   #    print stop_time.stop
   #    print stop_time.stop.stop_lat, stop_time.stop.stop_lon
 
-  for freq in session.query(Frequency):
-    print freq
-    print freq.trip
-    print freq.trip.route_id
+  #for freq in session.query(Frequency):
+  #  print freq
+  #  print freq.trip
+  #  print freq.trip.route_id
+
+  for transfer in session.query(Transfer):
+    print transfer
+    print transfer.from_stop, transfer.to_stop
 
   #for cal in session.query(ServicePeriod):
   #  print cal
@@ -355,6 +370,9 @@ if __name__=='__main__':
   mapper(FareRule, fare_rules_table, properties={'fare':relationship(Fare),'route':relationship(Route)})
   mapper(ShapePoint, shapes_table)
   mapper(Frequency, frequencies_table, properties={'trip':relationship(Trip)})
+  mapper(Transfer, transfers_table, properties={"from_stop":relationship(Stop,primaryjoin=transfers_table.c.from_stop_id==stops_table.c.stop_id),
+                                                "to_stop":relationship(Stop,primaryjoin=transfers_table.c.to_stop_id==stops_table.c.stop_id)})
+
   Session = sessionmaker(bind=engine)
   session = Session()
 
