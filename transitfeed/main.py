@@ -204,6 +204,17 @@ class ShapePoint(GTFSEntity):
 	    ('shape_dist_traveled',str))
   ID_FIELD = None
 
+class Frequency(GTFSEntity):
+  TABLENAME = "frequencies"
+  FIELDS = (('trip_id',make_gtfs_foreign_key_class(Trip)),
+            ('start_time',str),
+	    ('end_time',str),
+	    ('headway_secs',int))
+  ID_FIELD = None
+
+  def __repr__(self):
+    return "<Frequency %s-%s %s>"%(self.start_time,self.end_time,self.headway_secs)
+
 metadata = MetaData()
 agency_table = table_def_from_entity( Agency, metadata )
 routes_table = table_def_from_entity( Route, metadata )
@@ -215,6 +226,7 @@ fare_attributes_table = table_def_from_entity( Fare, metadata )
 fare_rules_table = table_def_from_entity( FareRule, metadata )
 stops_table = table_def_from_entity( Stop, metadata )
 shapes_table = table_def_from_entity( ShapePoint, metadata )
+frequencies_table = table_def_from_entity( Frequency, metadata )
 
 class Record(object):
   def __init__(self,header,row):
@@ -275,13 +287,14 @@ def load(session):
   for gtfs_class in (Agency, 
                      #Route, 
 		     #Stop,
-		     #Trip, 
+		     Trip, 
 		     #StopTime,
 		     #ServicePeriod, 
 		     #ServiceException, 
 		     #Fare,
 		     #FareRule,
-		     ShapePoint,
+		     #ShapePoint,
+		     Frequency,
 		     ):
 
     print "loading %s"%gtfs_class
@@ -309,11 +322,16 @@ def query(session):
 
   #print counts
 
-  for route in session.query(Route).filter(Route.route_id=='01'):
-    trip = route.trips[0]
-    for stop_time in trip.stop_times:
-      print stop_time.stop
-      print stop_time.stop.stop_lat, stop_time.stop.stop_lon
+  #for route in session.query(Route).filter(Route.route_id=='01'):
+  #  trip = route.trips[0]
+  #  for stop_time in trip.stop_times:
+  #    print stop_time.stop
+  #    print stop_time.stop.stop_lat, stop_time.stop.stop_lon
+
+  for freq in session.query(Frequency):
+    print freq
+    print freq.trip
+    print freq.trip.route_id
 
   #for cal in session.query(ServicePeriod):
   #  print cal
@@ -326,15 +344,19 @@ if __name__=='__main__':
   mapper(Agency, agency_table, properties={'routes':relationship(Route)}) 
   mapper(Route, routes_table, properties={'agency':relationship(Agency),'trips':relationship(Trip),'fare_rules':relationship(FareRule)})
   mapper(Stop, stops_table)
-  mapper(Trip, trips_table, properties={'route':relationship(Route),'stop_times':relationship(StopTime),'service_period':relationship(ServicePeriod)})
+  mapper(Trip, trips_table, properties={'route':relationship(Route),
+                                        'stop_times':relationship(StopTime),
+					'service_period':relationship(ServicePeriod),
+					'frequencies':relationship(Frequency)})
   mapper(StopTime, stop_times_table, properties={'trip':relationship(Trip),'stop':relationship(Stop)})
   mapper(ServicePeriod, calendar_table,properties={'trips':relationship(Trip),'exceptions':relationship(ServiceException)})
   mapper(ServiceException, calendar_dates_table, properties={'calendar':relationship(ServicePeriod)})
   mapper(Fare, fare_attributes_table, properties={'rules':relationship(FareRule)})
   mapper(FareRule, fare_rules_table, properties={'fare':relationship(Fare),'route':relationship(Route)})
   mapper(ShapePoint, shapes_table)
+  mapper(Frequency, frequencies_table, properties={'trip':relationship(Trip)})
   Session = sessionmaker(bind=engine)
   session = Session()
 
-  load(session)
-  #query(session)
+  #load(session)
+  query(session)
