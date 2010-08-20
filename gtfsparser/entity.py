@@ -1,4 +1,4 @@
-from gtfs import GTFSEntity, make_gtfs_foreign_key_class
+from gtfs import GTFSEntity, make_gtfs_foreign_key_class, GTFSBoolean
 
 class Agency(GTFSEntity):
   TABLENAME = "agency"
@@ -19,13 +19,13 @@ class Agency(GTFSEntity):
 class ServicePeriod(GTFSEntity):
   TABLENAME = "calendar"
   FIELDS = (('service_id', str),
-            ('monday', int),
-	    ('tuesday', int),
-	    ('wednesday', int),
-	    ('thursday', int),
-	    ('friday', int),
-	    ('saturday', int),
-	    ('sunday', int),
+            ('monday', GTFSBoolean),
+	    ('tuesday', GTFSBoolean),
+	    ('wednesday', GTFSBoolean),
+	    ('thursday', GTFSBoolean),
+	    ('friday', GTFSBoolean),
+	    ('saturday', GTFSBoolean),
+	    ('sunday', GTFSBoolean),
 	    ('start_date', str),
 	    ('end_date',str))
   ID_FIELD = "service_id"

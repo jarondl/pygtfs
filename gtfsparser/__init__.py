@@ -1,12 +1,24 @@
 import sqlalchemy
 from sqlalchemy.orm import relationship
 from entity import *
-from gtfs import GTFSForeignKey
+from gtfs import GTFSForeignKey, GTFSBoolean
+
+from sqlalchemy import types
+
+class GTFSBooleanType(types.TypeDecorator):
+  impl = types.Integer
+
+  def process_bind_param( self, value, dialect ):
+    return int(value)
+
+  def process_result_value( self, value, dialect ):
+    return GTFSBoolean( value )
 
 def table_def_from_entity(entity_class, metadata):
   sqlalchemy_types = {str:sqlalchemy.String,
                       int:sqlalchemy.Integer,
-		      float:sqlalchemy.Float}
+		      float:sqlalchemy.Float,
+		      GTFSBoolean:GTFSBooleanType}
   columns = []
   for field_name,field_type in entity_class.FIELDS:
     if issubclass(field_type, GTFSForeignKey):
