@@ -10,7 +10,7 @@ class Record(object):
     self.row = [x.strip() for x in row.split(",")]
 
   def to_dict(self):
-    return dict([(fieldname,self.row[fieldindex]) for fieldname,fieldindex in self.header.items()])
+    return dict([(fieldname,self.row[fieldindex] if fieldindex<len(self.row) else None) for fieldname,fieldindex in self.header.items()])
 
   def __repr__(self):
     return repr(self.to_dict())
