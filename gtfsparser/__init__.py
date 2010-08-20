@@ -42,7 +42,7 @@ def create_and_map_tables(metadata):
                                         'stop_times':relationship(StopTime),
 					'service_period':relationship(ServicePeriod),
 					'frequencies':relationship(Frequency)})
-  sqlalchemy.orm.mapper(StopTime, stop_times_table, properties={'trip':relationship(Trip),'stop':relationship(Stop)})
+  sqlalchemy.orm.mapper(StopTime, stop_times_table, properties={'trip':relationship(Trip),'stop':relationship(Stop, backref="stop_times")})
   sqlalchemy.orm.mapper(ServicePeriod, calendar_table,properties={'trips':relationship(Trip),'exceptions':relationship(ServiceException)})
   sqlalchemy.orm.mapper(ServiceException, calendar_dates_table, properties={'calendar':relationship(ServicePeriod)})
   sqlalchemy.orm.mapper(Fare, fare_attributes_table, properties={'rules':relationship(FareRule)})
