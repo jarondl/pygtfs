@@ -39,5 +39,9 @@ class TestSchedule(unittest.TestCase):
     self.assertEqual( [ag.agency_id for ag in self.schedule.agencies],
       [u'FunBus'] )
 
+  def test_agency_routes( self ):
+    self.assertEqual( [rt.route_id for rt in self.schedule.agencies[0].routes],
+      [] )
+
 if __name__=='__main__':
   unittest.main()
