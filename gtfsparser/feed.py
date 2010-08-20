@@ -1,13 +1,14 @@
 import os
 from codecs import iterdecode
 from zipfile import ZipFile
+import csv
 
 class Record(object):
   """A Record is a single row in a CSV file"""
 
   def __init__(self,header,row):
     self.header = header
-    self.row = [x.strip() for x in row.split(",")]
+    self.row = row 
 
   def to_dict(self):
     return dict([(fieldname,self.row[fieldindex] if fieldindex<len(self.row) else None) for fieldname,fieldindex in self.header.items()])
@@ -25,10 +26,9 @@ class Table(object):
   """A Table is a single CSV file"""
 
   def __init__(self, header, rows):
-    split_header = [x.strip() for x in header.split(",")]
 
     # header is a dict of name->index
-    self.header = dict( zip( split_header, range(len(split_header)) ) ) 
+    self.header = dict( zip( header, range(len(header)) ) ) 
     self.rows = rows
 
   def __repr__(self):
@@ -57,9 +57,9 @@ class Feed(object):
         contents = self.zf.read(filename)
       except KeyError:
         raise KeyError( "%s is not present feed"%filename )
-      return iterdecode( contents.split("\n"), "utf-8" )
+      return csv.reader( iterdecode( contents.split("\n"), "utf-8" ) )
     else:
-      return iterdecode( open( os.path.join( self.filename, filename ) ), "utf-8" )
+      return csv.reader( iterdecode( open( os.path.join( self.filename, filename ) ), "utf-8" ) )
 
   def get_table(self, filename):
     rows = self.get_rows( filename )
