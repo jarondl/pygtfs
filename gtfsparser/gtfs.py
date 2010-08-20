@@ -38,7 +38,6 @@ class GTFSTime(object):
     if not m:
       raise ValueError( 'Bad HH:MM:SS "%s"' % time_string )
     return int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3))
-
   
   def _format_seconds_since_midnight(self, s):
     """Formats an int number of seconds past midnight into a string
@@ -53,21 +52,9 @@ def make_gtfs_foreign_key_class(cls):
     _cls = cls
   return ret
 
-class GTFSField(object):
-  def __init__(self, fieldtype):
-    self.fieldtype = fieldtype
-
 class GTFSEntity(object):
   def __init__(self):
     pass
-
-  @classmethod
-  def fields(cls):
-    print cls.__dict__
-
-    for name,attr in cls.__dict__.items():
-      if isinstance( attr, GTFSField ):
-        yield( name, attr )
 
   def __init__(self, **kwargs):
     for attrname, attrtype in self.FIELDS:
