@@ -1,9 +1,7 @@
 import sqlalchemy
 from sqlalchemy.orm import relationship
-
 from entity import *
 from gtfs import GTFSForeignKey
-import feed
 
 def table_def_from_entity(entity_class, metadata):
   sqlalchemy_types = {str:sqlalchemy.String,int:sqlalchemy.Integer}
@@ -54,79 +52,5 @@ def create_and_map_tables(metadata):
   sqlalchemy.orm.mapper(Transfer, transfers_table, properties={"from_stop":relationship(Stop,primaryjoin=transfers_table.c.from_stop_id==stops_table.c.stop_id),
                                                 "to_stop":relationship(Stop,primaryjoin=transfers_table.c.to_stop_id==stops_table.c.stop_id)})
 
-def load(session):
-
-  fd = feed.Feed( "/home/brandon/Desktop/bart.zip" )
-
-  for gtfs_class in (Agency, 
-                     Route, 
-		     Stop,
-		     Trip, 
-		     StopTime,
-		     ServicePeriod, 
-		     ServiceException, 
-		     Fare,
-		     FareRule,
-		     ShapePoint,
-		     Frequency,
-		     Transfer,
-		     ):
-
-    print "loading %s"%gtfs_class
-    
-    for record in fd.get_table( gtfs_class.TABLENAME+".txt" ):
-      instance = gtfs_class( **record.to_dict() )
-      session.add( instance )
-
-  print "commit"
-  session.commit()
-
-def cons(ary):
-  for i in range(len(ary)-1):
-    yield ary[i],ary[i-1]
-
-def query(session):
-  counts = {}
-
-  #for agency in session.query(Agency).filter(Agency.agency_id=="BART"):
-  #  for route in agency.routes:
-  #    print route
-  #    for trip in route.trips:
-  #      for st1, st2 in cons(trip.stop_times):
-  #	  counts[(st1.stop_id,st2.stop_id)] = counts.get((st1.stop_id,st2.stop_id),0)+1
-
-  #print counts
-
-  #for route in session.query(Route).filter(Route.route_id=='01'):
-  #  trip = route.trips[0]
-  #  for stop_time in trip.stop_times:
-  #    print stop_time.stop
-  #    print stop_time.stop.stop_lat, stop_time.stop.stop_lon
-
-  #for freq in session.query(Frequency):
-  #  print freq
-  #  print freq.trip
-  #  print freq.trip.route_id
-
-  for transfer in session.query(Transfer):
-    print transfer
-    print transfer.from_stop, transfer.to_stop
-
-  #for cal in session.query(ServicePeriod):
-  #  print cal
-  #  print cal.exceptions
-
-
-if __name__=='__main__':
-  metadata = sqlalchemy.MetaData()
-
-  create_and_map_tables(metadata)
-
-  engine = sqlalchemy.create_engine('sqlite:////home/brandon/Desktop/test.db', echo=False)
-  metadata.create_all(engine) 
-
-  Session = sqlalchemy.orm.sessionmaker(bind=engine)
-  session = Session()
-
-  load(session)
-  query(session)
+metadata = sqlalchemy.MetaData()
+create_and_map_tables(metadata)
