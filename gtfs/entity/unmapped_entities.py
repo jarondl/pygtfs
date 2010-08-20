@@ -1,4 +1,4 @@
-from types import make_gtfs_foreign_key_class, Boolean, Time
+from ..types import make_gtfs_foreign_key_class, Boolean, Time
 
 class Entity(object):
   def __init__(self, **kwargs):
