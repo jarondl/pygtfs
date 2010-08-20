@@ -4,6 +4,6 @@ setup(
     version = "0.1",
     packages = find_packages(),
     entry_points = {
-      "console_scripts": ["compile_gtfs = gtfs.script.compile_gtfs:main"]
+      "console_scripts": ["compile_gtfs = gtfs.scripts.compile_gtfs:main"]
     }
 )

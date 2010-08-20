@@ -1,6 +1,6 @@
-from gtfsparser.loader import load
-from gtfsparser import metadata
-from gtfsparser.schedule import Schedule
+from ..loader import load
+from .. import metadata
+from ..schedule import Schedule
 
 from optparse import OptionParser
 import os
