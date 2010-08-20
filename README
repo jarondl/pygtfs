@@ -17,6 +17,7 @@ Rewrite of transitfeed
 >>> sched2 = gtfs.load( "bart.zip", "bart.db" ) # uses a disk-based db instead of a memory db
 
 ( this takes just as long as the first time )
+
 >>> sched2  # it's very similar to the first, except ...
 <gtfs.schedule.Schedule instance at 0xdeadbeef>
 >>> exit()
