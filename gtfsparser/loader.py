@@ -1,6 +1,7 @@
 from schedule import Schedule
 import feed
 from entity import *
+import sys
 
 def load(metadata, feed_filename, db_filename=":memory:"):
   schedule = Schedule( db_filename ) 
@@ -23,12 +24,21 @@ def load(metadata, feed_filename, db_filename=":memory:"):
 		     ):
 
     print "loading %s"%gtfs_class
-    
-    for record in fd.get_table( gtfs_class.TABLENAME+".txt" ):
-      instance = gtfs_class( **record.to_dict() )
-      schedule.session.add( instance )
+   
+    try:
+      for i, record in enumerate( fd.get_table( gtfs_class.TABLENAME+".txt" ) ):
+        if i%500==0:
+	  sys.stdout.write(".")
+	  sys.stdout.flush()
+	  schedule.session.commit()
 
-  print "commit"
+        instance = gtfs_class( **record.to_dict() )
+        schedule.session.add( instance )
+      print
+    except KeyError:
+      # TODO: check if the table is required
+      continue
+
   schedule.session.commit()
 
   return schedule

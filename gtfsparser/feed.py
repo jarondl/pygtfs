@@ -53,7 +53,11 @@ class Feed(object):
 
   def get_rows(self, filename):
     if self.zf:
-      return iterdecode( self.zf.read(filename).split("\n"), "utf-8" )
+      try:
+        contents = self.zf.read(filename)
+      except KeyError:
+        raise KeyError( "%s is not present feed"%filename )
+      return iterdecode( contents.split("\n"), "utf-8" )
     else:
       return iterdecode( open( os.path.join( self.filename, filename ) ), "utf-8" )
 
