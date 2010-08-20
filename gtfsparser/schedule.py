@@ -17,5 +17,9 @@ class Schedule:
   def agencies(self):
     return self.session.query(Agency).all()
 
+  @property
+  def service_periods(self):
+    return self.session.query(ServicePeriod).all()
+
   def create_tables( self, metadata ):
     metadata.create_all(self.engine) 
