@@ -1,7 +1,7 @@
 import sqlalchemy
 from sqlalchemy.orm import relationship
 from entity import *
-from gtfs import GTFSForeignKey, GTFSBoolean, GTFSTime
+from types import GTFSForeignKey, GTFSBoolean, GTFSTime
 
 from sqlalchemy import types
 

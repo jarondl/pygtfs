@@ -1,4 +1,4 @@
-from gtfs import make_gtfs_foreign_key_class, GTFSBoolean, GTFSTime
+from types import make_gtfs_foreign_key_class, GTFSBoolean, GTFSTime
 
 class Entity(object):
   def __init__(self):

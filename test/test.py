@@ -1,7 +1,7 @@
 from gtfsparser.loader import load
 from gtfsparser import metadata
 from gtfsparser.schedule import Schedule
-from gtfsparser.gtfs import GTFSBoolean
+from gtfsparser.types import GTFSBoolean
 
 import unittest
 

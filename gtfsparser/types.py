@@ -1,4 +1,3 @@
-import sqlalchemy.types as types
 import re
 
 class GTFSForeignKey(str):
