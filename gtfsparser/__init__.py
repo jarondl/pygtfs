@@ -1,37 +1,35 @@
 import sqlalchemy
 from sqlalchemy.orm import relationship
 from entity import *
-from types import GTFSForeignKey, GTFSBoolean, GTFSTime
+import types
 
-from sqlalchemy import types
-
-class GTFSBooleanType(types.TypeDecorator):
-  impl = types.Integer
+class BooleanType(sqlalchemy.types.TypeDecorator):
+  impl = sqlalchemy.types.Integer
 
   def process_bind_param( self, value, dialect ):
     return int(value)
 
   def process_result_value( self, value, dialect ):
-    return GTFSBoolean( value )
+    return types.Boolean( value )
 
-class GTFSTimeType(types.TypeDecorator):
-  impl = types.Integer
+class TimeType(sqlalchemy.types.TypeDecorator):
+  impl = sqlalchemy.types.Integer
 
   def process_bind_param( self, value, dialect ):
     return value.val if value else None
 
   def process_result_value( self, value, dialect ):
-    return GTFSTime( value ) if value else None
+    return types.Time( value ) if value else None
 
 def table_def_from_entity(entity_class, metadata):
   sqlalchemy_types = {str:sqlalchemy.String,
                       int:sqlalchemy.Integer,
 		      float:sqlalchemy.Float,
-		      GTFSBoolean:GTFSBooleanType,
-		      GTFSTime:GTFSTimeType}
+		      types.Boolean:BooleanType,
+		      types.Time:TimeType}
   columns = []
   for field_name,field_type in entity_class.FIELDS:
-    if issubclass(field_type, GTFSForeignKey):
+    if issubclass(field_type, types.ForeignKey):
       foreign_key_column_name = field_type._cls.TABLENAME+"."+field_type._cls.ID_FIELD
       columns.append( sqlalchemy.Column( field_name, sqlalchemy.String, sqlalchemy.ForeignKey(foreign_key_column_name) ) )
     else:

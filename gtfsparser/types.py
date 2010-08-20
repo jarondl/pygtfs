@@ -1,9 +1,9 @@
 import re
 
-class GTFSForeignKey(str):
+class ForeignKey(str):
   pass
 
-class GTFSBoolean(object):
+class Boolean(object):
   def __init__(self, val):
     val = int(val)
     if val not in (0,1):
@@ -17,7 +17,7 @@ class GTFSBoolean(object):
     return repr(self.val)
 
 
-class GTFSTime(object):
+class Time(object):
 
   def __init__(self, timerepr):
     if isinstance( timerepr, int ):
@@ -47,7 +47,7 @@ class GTFSTime(object):
     return "<Time %s>"%self._format_seconds_since_midnight(self.val)
 
 def make_gtfs_foreign_key_class(cls):
-  class ret(GTFSForeignKey):
+  class ret(ForeignKey):
     _cls = cls
   return ret
 

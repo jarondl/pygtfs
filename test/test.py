@@ -1,7 +1,7 @@
 from gtfsparser.loader import load
 from gtfsparser import metadata
 from gtfsparser.schedule import Schedule
-from gtfsparser.types import GTFSBoolean
+from gtfsparser.types import Boolean
 
 import unittest
 
@@ -16,7 +16,7 @@ class TestSchedule(unittest.TestCase):
     self.assertEqual( [sp.service_id for sp in self.schedule.service_periods],
                       ["WE","WD"] )
     self.assertEqual( type( self.schedule.service_periods[0].monday ),
-                      GTFSBoolean )
+                      Boolean )
 
   def test_stops( self ):
     self.assertEqual( [st.stop_id for st in self.schedule.stops],

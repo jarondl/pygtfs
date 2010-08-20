@@ -1,4 +1,4 @@
-from types import make_gtfs_foreign_key_class, GTFSBoolean, GTFSTime
+from types import make_gtfs_foreign_key_class, Boolean, Time
 
 class Entity(object):
   def __init__(self):
@@ -34,13 +34,13 @@ class Agency(Entity):
 class ServicePeriod(Entity):
   TABLENAME = "calendar"
   FIELDS = (('service_id', str),
-            ('monday', GTFSBoolean),
-	    ('tuesday', GTFSBoolean),
-	    ('wednesday', GTFSBoolean),
-	    ('thursday', GTFSBoolean),
-	    ('friday', GTFSBoolean),
-	    ('saturday', GTFSBoolean),
-	    ('sunday', GTFSBoolean),
+            ('monday', Boolean),
+	    ('tuesday', Boolean),
+	    ('wednesday', Boolean),
+	    ('thursday', Boolean),
+	    ('friday', Boolean),
+	    ('saturday', Boolean),
+	    ('sunday', Boolean),
 	    ('start_date', str),
 	    ('end_date',str))
   ID_FIELD = "service_id"
@@ -116,8 +116,8 @@ class Trip(Entity):
 class StopTime(Entity):
   TABLENAME = "stop_times"
   FIELDS = (('trip_id',make_gtfs_foreign_key_class(Trip)),
-            ('arrival_time',GTFSTime),
-	    ('departure_time',GTFSTime),
+            ('arrival_time',Time),
+	    ('departure_time',Time),
 	    ('stop_id',make_gtfs_foreign_key_class(Stop)),
 	    ('stop_sequence',int),
 	    ('stop_headsign',str),
