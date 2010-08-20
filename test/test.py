@@ -1,5 +1,4 @@
 from gtfs.loader import load
-from gtfs.entity import metadata
 from gtfs.schedule import Schedule
 from gtfs.types import Boolean
 
@@ -7,7 +6,7 @@ import unittest
 
 class TestSchedule(unittest.TestCase):
   def setUp(self):
-    self.schedule = load( metadata, "test/data/sample-feed.zip" )
+    self.schedule = load( "test/data/sample-feed.zip" )
 
   def test_routes( self ):
     self.assertEqual( self.schedule.routes[0].route_id, "A" )

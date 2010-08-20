@@ -3,9 +3,9 @@ import feed
 from entity import *
 import sys
 
-def load(metadata, feed_filename, db_filename=":memory:"):
+def load(feed_filename, db_filename=":memory:"):
   schedule = Schedule( db_filename ) 
-  schedule.create_tables(metadata)
+  schedule.create_tables()
   
   fd = feed.Feed( feed_filename )
 

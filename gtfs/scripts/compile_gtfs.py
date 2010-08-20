@@ -1,5 +1,4 @@
 from ..loader import load
-from .. import metadata
 from ..schedule import Schedule
 
 from optparse import OptionParser
@@ -22,7 +21,7 @@ def main():
   else:
     output_filename = os.path.splitext( gtfs_filename )[0]+".db"
 
-  load( metadata, gtfs_filename, output_filename )
+  load( gtfs_filename, output_filename )
 
 if __name__=='__main__':
   main()

@@ -25,5 +25,5 @@ class Schedule:
   def stops(self):
     return self.session.query(Stop).all()
 
-  def create_tables( self, metadata ):
+  def create_tables( self ):
     metadata.create_all(self.engine) 
