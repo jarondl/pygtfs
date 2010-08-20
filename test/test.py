@@ -6,9 +6,20 @@ from gtfsparser import metadata
 from gtfsparser.schedule import Schedule
 
 if __name__=='__main__':
-  #schedule = load( metadata, "/home/brandon/Desktop/bart.zip", "/home/brandon/Desktop/test.db" )
+  schedule = load( metadata, "data/sample-feed.zip" )
 
-  schedule = Schedule( "/home/brandon/Desktop/test.db" )
   print schedule.routes
+  for trip in schedule.routes[0].trips:
+    print trip
+    for stop_time in trip.stop_times:
+      print stop_time
+    for frequency in trip.frequencies:
+      print frequency
+  for service_period in schedule.service_periods:
+    print service_period
   print schedule.agencies
+
+  #schedule = Schedule( "/home/brandon/Desktop/test.db" )
+  #print schedule.routes
+  #print schedule.agencies
 
