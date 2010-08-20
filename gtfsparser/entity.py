@@ -1,9 +1,6 @@
 from types import make_gtfs_foreign_key_class, Boolean, Time
 
 class Entity(object):
-  def __init__(self):
-    pass
-
   def __init__(self, **kwargs):
     for attrname, attrtype in self.FIELDS:
       if attrname in kwargs:
@@ -24,9 +21,6 @@ class Agency(Entity):
 	    ('agency_lang',str),
 	    ('agency_phone',str))
   ID_FIELD = "agency_id"
-
-  def __init__(self, **kwargs):
-    Entity.__init__(self, **kwargs)
 
   def __repr__(self):
     return "<Agency %s>"%self.agency_id
