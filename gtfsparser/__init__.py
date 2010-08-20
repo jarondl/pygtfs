@@ -4,7 +4,9 @@ from entity import *
 from gtfs import GTFSForeignKey
 
 def table_def_from_entity(entity_class, metadata):
-  sqlalchemy_types = {str:sqlalchemy.String,int:sqlalchemy.Integer}
+  sqlalchemy_types = {str:sqlalchemy.String,
+                      int:sqlalchemy.Integer,
+		      float:sqlalchemy.Float}
   columns = []
   for field_name,field_type in entity_class.FIELDS:
     if issubclass(field_type, GTFSForeignKey):

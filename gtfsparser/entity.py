@@ -72,8 +72,8 @@ class Stop(GTFSEntity):
             ('stop_code',str),
 	    ('stop_name',str),
 	    ('stop_desc',str),
-	    ('stop_lat',str),
-	    ('stop_lon',str),
+	    ('stop_lat',float),
+	    ('stop_lon',float),
 	    ('zone_id',str),
 	    ('stop_url',str),
 	    ('location_type',str),
@@ -108,7 +108,7 @@ class StopTime(GTFSEntity):
 	    ('stop_headsign',str),
 	    ('pickup_type',str),
 	    ('drop_off_type',str),
-	    ('shape_dist_traveled',str))
+	    ('shape_dist_traveled',float))
   ID_FIELD = None
   
   def __repr__(self):
