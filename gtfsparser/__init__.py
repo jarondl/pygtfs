@@ -1,7 +1,7 @@
 import sqlalchemy
 from sqlalchemy.orm import relationship
 from entity import *
-from gtfs import GTFSForeignKey, GTFSBoolean
+from gtfs import GTFSForeignKey, GTFSBoolean, GTFSTime
 
 from sqlalchemy import types
 
@@ -14,11 +14,21 @@ class GTFSBooleanType(types.TypeDecorator):
   def process_result_value( self, value, dialect ):
     return GTFSBoolean( value )
 
+class GTFSTimeType(types.TypeDecorator):
+  impl = types.Integer
+
+  def process_bind_param( self, value, dialect ):
+    return value.val if value else None
+
+  def process_result_value( self, value, dialect ):
+    return GTFSTime( value ) if value else None
+
 def table_def_from_entity(entity_class, metadata):
   sqlalchemy_types = {str:sqlalchemy.String,
                       int:sqlalchemy.Integer,
 		      float:sqlalchemy.Float,
-		      GTFSBoolean:GTFSBooleanType}
+		      GTFSBoolean:GTFSBooleanType,
+		      GTFSTime:GTFSTimeType}
   columns = []
   for field_name,field_type in entity_class.FIELDS:
     if issubclass(field_type, GTFSForeignKey):

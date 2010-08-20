@@ -1,4 +1,4 @@
-from gtfs import GTFSEntity, make_gtfs_foreign_key_class, GTFSBoolean
+from gtfs import GTFSEntity, make_gtfs_foreign_key_class, GTFSBoolean, GTFSTime
 
 class Agency(GTFSEntity):
   TABLENAME = "agency"
@@ -101,8 +101,8 @@ class Trip(GTFSEntity):
 class StopTime(GTFSEntity):
   TABLENAME = "stop_times"
   FIELDS = (('trip_id',make_gtfs_foreign_key_class(Trip)),
-            ('arrival_time',str),
-	    ('departure_time',str),
+            ('arrival_time',GTFSTime),
+	    ('departure_time',GTFSTime),
 	    ('stop_id',make_gtfs_foreign_key_class(Stop)),
 	    ('stop_sequence',int),
 	    ('stop_headsign',str),
