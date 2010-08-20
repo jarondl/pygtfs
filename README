@@ -1,9 +1,29 @@
 Rewrite of transitfeed
 
->>> import transitfeed
->>> schedule = transitfeed.load( "bart.zip", dbname="bart.db" )
->>> schedule.routes
-... blah blah
->>> schedule2 = transitfeed.load( "bart.db" )
->>> schedule2.routes
-... blah blah
+>>> import gtfs
+>>> sched = gtfs.load( "bart.zip" )
+
+( it takes a minute or two to load )
+
+>>> sched.stops
+[<Stop POWL>, <Stop ROCK>, <Stop SANL>, <Stop SHAY>, <Stop SSAN>, <Stop UCTY>, <Stop WCRK>, <Stop WOAK>, <Stop COLM>, <Stop MLBR>, <Stop RICH>, <Stop SBRN>, <Stop SFIA>, <Stop OAK>, <Stop 12TH_N>, <Stop MCAR_S>, <Stop 12TH>, <Stop 16TH>, <Stop 19TH>, <Stop 24TH>, <Stop ASBY>, <Stop BALB>, <Stop COLS>, <Stop CONC>, <Stop DALY>, <Stop DBRK>, <Stop DELN>, <Stop DUBL>, <Stop EMBR>, <Stop FRMT>, <Stop FTVL>, <Stop GLEN>, <Stop HAYW>, <Stop LAFY>, <Stop LAKE>, <Stop MCAR>, <Stop MONT>, <Stop NBRK>, <Stop NCON>, <Stop ORIN>, <Stop PHIL>, <Stop PITT>, <Stop PLZA>, <Stop BAYF>, <Stop CAST>, <Stop CIVC>]
+>>> sched.routes
+[<Route AirBART>, <Route 01>, <Route 02>, <Route 03>, <Route 04>, <Route 05>, <Route 06>, <Route 07>, <Route 08>, <Route 11>, <Route 12>]
+>>> sched.service_periods
+[<ServicePeriod WKDY 1111100>, <ServicePeriod SAT 0000010>, <ServicePeriod SUN 0000001>, <ServicePeriod M-FSAT 1111110>, <ServicePeriod SUNAB 0000001>]
+>>> # pretty much all relationships are mapped 
+>>> sched.stops[0].stop_times[0].trip.route.agency
+<Agency BART>
+>>> sched2 = gtfs.load( "bart.zip", "bart.db" ) # uses a disk-based db instead of a memory db
+
+( this takes just as long as the first time )
+>>> sched2  # it's very similar to the first, except ...
+<gtfs.schedule.Schedule instance at 0xdeadbeef>
+>>> exit()
+$ python
+>>> from gtfs import Schedule
+>>> sched = Schedule( "bart.db" ) # this takes no time at all
+>>> sched.stops
+[<Stop POWL>, <Stop ROCK>, <Stop SANL>, <Stop SHAY>, <Stop SSAN>, <Stop UCTY>, <Stop WCRK>, <Stop WOAK>, <Stop COLM>, <Stop MLBR>, <Stop RICH>, <Stop SBRN>, <Stop SFIA>, <Stop OAK>, <Stop 12TH_N>, <Stop MCAR_S>, <Stop 12TH>, <Stop 16TH>, <Stop 19TH>, <Stop 24TH>, <Stop ASBY>, <Stop BALB>, <Stop COLS>, <Stop CONC>, <Stop DALY>, <Stop DBRK>, <Stop DELN>, <Stop DUBL>, <Stop EMBR>, <Stop FRMT>, <Stop FTVL>, <Stop GLEN>, <Stop HAYW>, <Stop LAFY>, <Stop LAKE>, <Stop MCAR>, <Stop MONT>, <Stop NBRK>, <Stop NCON>, <Stop ORIN>, <Stop PHIL>, <Stop PITT>, <Stop PLZA>, <Stop BAYF>, <Stop CAST>, <Stop CIVC>]
+>>> sched.stops[0].stop_times[0].trip.route.agency
+<Agency BART>
