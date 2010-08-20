@@ -1,6 +1,21 @@
-from gtfs import GTFSEntity, make_gtfs_foreign_key_class, GTFSBoolean, GTFSTime
+from gtfs import make_gtfs_foreign_key_class, GTFSBoolean, GTFSTime
 
-class Agency(GTFSEntity):
+class Entity(object):
+  def __init__(self):
+    pass
+
+  def __init__(self, **kwargs):
+    for attrname, attrtype in self.FIELDS:
+      if attrname in kwargs:
+        attrvaluestr = kwargs[attrname]
+	if attrvaluestr == '':
+	  attrvalue = None
+	else:
+	  attrvalue = attrtype( attrvaluestr )
+
+        setattr( self, attrname, attrvalue )
+
+class Agency(Entity):
   TABLENAME = "agency"
   FIELDS = (('agency_id',str),
             ('agency_name',str),
@@ -11,12 +26,12 @@ class Agency(GTFSEntity):
   ID_FIELD = "agency_id"
 
   def __init__(self, **kwargs):
-    GTFSEntity.__init__(self, **kwargs)
+    Entity.__init__(self, **kwargs)
 
   def __repr__(self):
     return "<Agency %s>"%self.agency_id
 
-class ServicePeriod(GTFSEntity):
+class ServicePeriod(Entity):
   TABLENAME = "calendar"
   FIELDS = (('service_id', str),
             ('monday', GTFSBoolean),
@@ -40,7 +55,7 @@ class ServicePeriod(GTFSEntity):
 					   self.saturday,
 					   self.sunday)
 
-class ServiceException(GTFSEntity):
+class ServiceException(Entity):
   TABLENAME = "calendar_dates"
   FIELDS = (('service_id', make_gtfs_foreign_key_class(ServicePeriod)),
             ('date', str),
@@ -50,7 +65,7 @@ class ServiceException(GTFSEntity):
   def __repr__(self):
     return "<ServiceException %s %s>"%(self.date, self.exception_type)
 
-class Route(GTFSEntity):
+class Route(Entity):
   TABLENAME = "routes"
   FIELDS = (('route_id',str),
             ('agency_id',make_gtfs_foreign_key_class(Agency)),
@@ -66,7 +81,7 @@ class Route(GTFSEntity):
   def __repr__(self):
     return "<Route %s>"%self.route_id
 
-class Stop(GTFSEntity):
+class Stop(Entity):
   TABLENAME = "stops"
   FIELDS = (('stop_id',str),
             ('stop_code',str),
@@ -83,7 +98,7 @@ class Stop(GTFSEntity):
   def __repr__(self):
     return "<Stop %s>"%self.stop_id
 
-class Trip(GTFSEntity):
+class Trip(Entity):
   TABLENAME = "trips"
   FIELDS = (('route_id',make_gtfs_foreign_key_class(Route)),
             ('service_id',make_gtfs_foreign_key_class(ServicePeriod)),
@@ -98,7 +113,7 @@ class Trip(GTFSEntity):
   def __repr__(self):
     return "<Trip %s>"%self.trip_id
 
-class StopTime(GTFSEntity):
+class StopTime(Entity):
   TABLENAME = "stop_times"
   FIELDS = (('trip_id',make_gtfs_foreign_key_class(Trip)),
             ('arrival_time',GTFSTime),
@@ -114,7 +129,7 @@ class StopTime(GTFSEntity):
   def __repr__(self):
     return "<StopTime %s %s>"%(self.trip_id,self.departure_time)
 
-class Fare(GTFSEntity):
+class Fare(Entity):
   TABLENAME = "fare_attributes"
   FIELDS = (('fare_id',str),
             ('price',str),
@@ -127,7 +142,7 @@ class Fare(GTFSEntity):
   def __repr__(self):
     return "<Fare %s %s>"%(self.price,self.currency_type)
 
-class FareRule(GTFSEntity):
+class FareRule(Entity):
   TABLENAME = "fare_rules"
   FIELDS = (('fare_id',make_gtfs_foreign_key_class(Fare)),
             ('route_id',make_gtfs_foreign_key_class(Route)),
@@ -136,7 +151,7 @@ class FareRule(GTFSEntity):
 	    ('contains_id',str))
   ID_FIELD = None
 
-class ShapePoint(GTFSEntity):
+class ShapePoint(Entity):
   TABLENAME = "shapes"
   FIELDS = (('shape_id',str),
             ('shape_pt_lat',str),
@@ -145,7 +160,7 @@ class ShapePoint(GTFSEntity):
 	    ('shape_dist_traveled',str))
   ID_FIELD = None
 
-class Frequency(GTFSEntity):
+class Frequency(Entity):
   TABLENAME = "frequencies"
   FIELDS = (('trip_id',make_gtfs_foreign_key_class(Trip)),
             ('start_time',str),
@@ -156,7 +171,7 @@ class Frequency(GTFSEntity):
   def __repr__(self):
     return "<Frequency %s-%s %s>"%(self.start_time,self.end_time,self.headway_secs)
 
-class Transfer(GTFSEntity):
+class Transfer(Entity):
   TABLENAME = "transfers"
   FIELDS = (('from_stop_id',make_gtfs_foreign_key_class(Stop)),
             ('to_stop_id',make_gtfs_foreign_key_class(Stop)),

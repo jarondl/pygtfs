@@ -52,17 +52,3 @@ def make_gtfs_foreign_key_class(cls):
     _cls = cls
   return ret
 
-class GTFSEntity(object):
-  def __init__(self):
-    pass
-
-  def __init__(self, **kwargs):
-    for attrname, attrtype in self.FIELDS:
-      if attrname in kwargs:
-        attrvaluestr = kwargs[attrname]
-	if attrvaluestr == '':
-	  attrvalue = None
-	else:
-	  attrvalue = attrtype( attrvaluestr )
-
-        setattr( self, attrname, attrvalue )
