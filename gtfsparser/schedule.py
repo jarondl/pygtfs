@@ -21,5 +21,9 @@ class Schedule:
   def service_periods(self):
     return self.session.query(ServicePeriod).all()
 
+  @property
+  def stops(self):
+    return self.session.query(Stop).all()
+
   def create_tables( self, metadata ):
     metadata.create_all(self.engine) 
