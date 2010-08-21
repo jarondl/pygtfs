@@ -1,10 +1,13 @@
 Rewrite of transitfeed
 
+<pre>
 >>> import gtfs
 >>> sched = gtfs.load( "bart.zip" )
+</pre>
 
 ( it takes a minute or two to load )
 
+<pre>
 >>> sched.stops
 [<Stop POWL>, <Stop ROCK>, <Stop SANL>, <Stop SHAY>, <Stop SSAN>, <Stop UCTY>, <Stop WCRK>, <Stop WOAK>, <Stop COLM>, <Stop MLBR>, <Stop RICH>, <Stop SBRN>, <Stop SFIA>, <Stop OAK>, <Stop 12TH_N>, <Stop MCAR_S>, <Stop 12TH>, <Stop 16TH>, <Stop 19TH>, <Stop 24TH>, <Stop ASBY>, <Stop BALB>, <Stop COLS>, <Stop CONC>, <Stop DALY>, <Stop DBRK>, <Stop DELN>, <Stop DUBL>, <Stop EMBR>, <Stop FRMT>, <Stop FTVL>, <Stop GLEN>, <Stop HAYW>, <Stop LAFY>, <Stop LAKE>, <Stop MCAR>, <Stop MONT>, <Stop NBRK>, <Stop NCON>, <Stop ORIN>, <Stop PHIL>, <Stop PITT>, <Stop PLZA>, <Stop BAYF>, <Stop CAST>, <Stop CIVC>]
 >>> sched.routes
@@ -15,9 +18,11 @@ Rewrite of transitfeed
 >>> sched.stops[0].stop_times[0].trip.route.agency
 <Agency BART>
 >>> sched2 = gtfs.load( "bart.zip", "bart.db" ) # uses a disk-based db instead of a memory db
+</pre>
 
 ( this takes just as long as the first time )
 
+<pre>
 >>> sched2  # it's very similar to the first, except ...
 <gtfs.schedule.Schedule instance at 0xdeadbeef>
 >>> exit()
@@ -28,3 +33,4 @@ $ python
 [<Stop POWL>, <Stop ROCK>, <Stop SANL>, <Stop SHAY>, <Stop SSAN>, <Stop UCTY>, <Stop WCRK>, <Stop WOAK>, <Stop COLM>, <Stop MLBR>, <Stop RICH>, <Stop SBRN>, <Stop SFIA>, <Stop OAK>, <Stop 12TH_N>, <Stop MCAR_S>, <Stop 12TH>, <Stop 16TH>, <Stop 19TH>, <Stop 24TH>, <Stop ASBY>, <Stop BALB>, <Stop COLS>, <Stop CONC>, <Stop DALY>, <Stop DBRK>, <Stop DELN>, <Stop DUBL>, <Stop EMBR>, <Stop FRMT>, <Stop FTVL>, <Stop GLEN>, <Stop HAYW>, <Stop LAFY>, <Stop LAKE>, <Stop MCAR>, <Stop MONT>, <Stop NBRK>, <Stop NCON>, <Stop ORIN>, <Stop PHIL>, <Stop PITT>, <Stop PLZA>, <Stop BAYF>, <Stop CAST>, <Stop CIVC>]
 >>> sched.stops[0].stop_times[0].trip.route.agency
 <Agency BART>
+</pre>
