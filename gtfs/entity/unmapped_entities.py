@@ -25,6 +25,12 @@ class Agency(Entity):
   def __repr__(self):
     return "<Agency %s>"%self.agency_id
 
+  def __init__(self,**kwargs):
+    Entity.__init__(self, **kwargs)
+
+    if not hasattr( self, "agency_id" ) or self.agency_id is None:
+      self.agency_id = "__DEFAULT__"
+
 class ServicePeriod(Entity):
   TABLENAME = "calendar"
   FIELDS = (('service_id', str),
@@ -74,6 +80,12 @@ class Route(Entity):
 
   def __repr__(self):
     return "<Route %s>"%self.route_id
+
+  def __init__(self, **kwargs):
+    Entity.__init__(self, **kwargs)
+
+    if not hasattr( self, "agency_id" ) or self.agency_id is None:
+      self.agency_id = "__DEFAULT__"
 
 class Stop(Entity):
   TABLENAME = "stops"
