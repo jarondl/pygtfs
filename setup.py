@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 setup(
     name = "gtfs",
-    version = "0.1",
+    version = "0.1.1",
     packages = find_packages(),
     install_requires=['sqlalchemy>=0.6.3'],
     entry_points = {
