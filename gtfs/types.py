@@ -1,4 +1,5 @@
 import re
+from datetime import date, datetime
 
 class ForeignKey(str):
   pass
@@ -15,7 +16,6 @@ class Boolean(object):
 
   def __repr__(self):
     return repr(self.val)
-
 
 class Time(object):
 
@@ -45,6 +45,32 @@ class Time(object):
 
   def __repr__(self):
     return "<Time %s>"%self._format_seconds_since_midnight(self.val)
+
+  def __int__(self):
+    return self.val
+
+  def __eq__(self,other):
+    return self.val==other.val
+
+  def __sub__(self,other):
+    return self.val-other.val 
+
+class Date(object):
+  def __init__(self, daterepr):
+    if isinstance( daterepr, int ):
+      self.val = date.fromordinal( daterepr )
+    elif isinstance( daterepr, date ):
+      self.val = daterepr
+    elif isinstance( daterepr, basestring ):
+      self.val = self._date_string_to_date_object( daterepr )
+    else:
+      raise Exception( "daterepr must be basetring, int, or date, found %s"%type(daterepr) )
+      
+  def _date_string_to_date_object(self, date_string):
+    """Return a date object for a string "YYYYMMDD"."""
+    # If this becomes a bottleneck date objects could be cached
+    return date(int(date_string[0:4]), int(date_string[4:6]),
+                         int(date_string[6:8]))
 
 def make_gtfs_foreign_key_class(cls):
   class ret(ForeignKey):

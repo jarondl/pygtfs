@@ -21,12 +21,22 @@ class TimeType(sqlalchemy.types.TypeDecorator):
   def process_result_value( self, value, dialect ):
     return types.Time( value ) if value else None
 
+class DateType(sqlalchemy.types.TypeDecorator):
+  impl = sqlalchemy.types.Integer
+
+  def process_bind_param( self, value, dialect ):
+    return value.val.toordinal() if value else None
+
+  def process_result_value( self, value, dialect ):
+    return types.Date( value ) if value else None
+
 def table_def_from_entity(entity_class, metadata):
   sqlalchemy_types = {str:sqlalchemy.String,
                       int:sqlalchemy.Integer,
 		      float:sqlalchemy.Float,
 		      types.Boolean:BooleanType,
-		      types.Time:TimeType}
+		      types.Time:TimeType,
+		      types.Date:DateType}
   columns = []
   for field_name,field_type in entity_class.FIELDS:
     if issubclass(field_type, types.ForeignKey):
@@ -61,8 +71,9 @@ def create_and_map_tables(metadata):
   sqlalchemy.orm.mapper(Route, routes_table, properties={'agency':relationship(Agency,backref="routes")})
   sqlalchemy.orm.mapper(Stop, stops_table)
   sqlalchemy.orm.mapper(Trip, trips_table, properties={'route':relationship(Route, backref="trips"),
-					'service_period':relationship(ServicePeriod, backref="trips")})
-  sqlalchemy.orm.mapper(StopTime, stop_times_table, properties={'trip':relationship(Trip, backref="stop_times"),
+					'service_period':relationship(ServicePeriod, backref="trips"),
+					'stop_times':relationship(StopTime, order_by="stop_sequence")})
+  sqlalchemy.orm.mapper(StopTime, stop_times_table, properties={'trip':relationship(Trip),
                                                                 'stop':relationship(Stop, backref="stop_times")})
   sqlalchemy.orm.mapper(ServicePeriod, calendar_table)
   sqlalchemy.orm.mapper(ServiceException, calendar_dates_table, properties={'service_period':relationship(ServicePeriod,backref="exceptions")})

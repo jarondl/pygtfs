@@ -1,4 +1,4 @@
-from ..types import make_gtfs_foreign_key_class, Boolean, Time
+from ..types import make_gtfs_foreign_key_class, Boolean, Time, Date
 
 class Entity(object):
   def __init__(self, **kwargs):
@@ -41,8 +41,8 @@ class ServicePeriod(Entity):
 	    ('friday', Boolean),
 	    ('saturday', Boolean),
 	    ('sunday', Boolean),
-	    ('start_date', str),
-	    ('end_date',str))
+	    ('start_date', Date),
+	    ('end_date', Date))
   ID_FIELD = "service_id"
 
   def __repr__(self):
@@ -58,7 +58,7 @@ class ServicePeriod(Entity):
 class ServiceException(Entity):
   TABLENAME = "calendar_dates"
   FIELDS = (('service_id', make_gtfs_foreign_key_class(ServicePeriod)),
-            ('date', str),
+            ('date', Date),
 	    ('exception_type', str))
   ID_FIELD = None
 
