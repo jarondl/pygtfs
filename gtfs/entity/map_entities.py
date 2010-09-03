@@ -72,7 +72,8 @@ def create_and_map_tables(metadata):
   sqlalchemy.orm.mapper(Stop, stops_table)
   sqlalchemy.orm.mapper(Trip, trips_table, properties={'route':relationship(Route, backref="trips"),
 					'service_period':relationship(ServicePeriod, backref="trips"),
-					'stop_times':relationship(StopTime, order_by="stop_sequence")})
+					'stop_times':relationship(StopTime, order_by="stop_sequence"),
+					'shape_points':relationship(ShapePoint, order_by="shape_pt_sequence")})
   sqlalchemy.orm.mapper(StopTime, stop_times_table, properties={'trip':relationship(Trip),
                                                                 'stop':relationship(Stop, backref="stop_times")})
   sqlalchemy.orm.mapper(ServicePeriod, calendar_table)

@@ -113,7 +113,7 @@ class Trip(Entity):
 	    ('trip_short_name',str),
 	    ('direction_id',str),
 	    ('block_id',str),
-	    ('shape_id',str))
+	    ('shape_id',make_gtfs_foreign_key_class(ShapePoint)))
   ID_FIELD = "trip_id"
 
   def __repr__(self):
