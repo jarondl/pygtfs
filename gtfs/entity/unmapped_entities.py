@@ -12,6 +12,18 @@ class Entity(object):
 
         setattr( self, attrname, attrvalue )
 
+class ShapePoint(Entity):
+  TABLENAME = "shapes"
+  FIELDS = (('shape_id',str),
+            ('shape_pt_lat',str),
+	    ('shape_pt_lon',str),
+	    ('shape_pt_sequence',int),
+	    ('shape_dist_traveled',str))
+  ID_FIELD = None
+
+  def __repr__(self):
+    return "<ShapePoint #%s (%s, %s)>"%(self.shape_pt_sequence,self.shape_pt_lat,self.shape_pt_lon)
+
 class Agency(Entity):
   TABLENAME = "agency"
   FIELDS = (('agency_id',str),
@@ -155,15 +167,6 @@ class FareRule(Entity):
 	    ('origin_id',str),
 	    ('destination_id',str),
 	    ('contains_id',str))
-  ID_FIELD = None
-
-class ShapePoint(Entity):
-  TABLENAME = "shapes"
-  FIELDS = (('shape_id',str),
-            ('shape_pt_lat',str),
-	    ('shape_pt_lon',str),
-	    ('shape_pt_sequence',int),
-	    ('shape_dist_traveled',str))
   ID_FIELD = None
 
 class Frequency(Entity):
