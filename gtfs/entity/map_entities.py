@@ -41,7 +41,7 @@ def table_def_from_entity(entity_class, metadata):
   for field_name,field_type in entity_class.FIELDS:
     if issubclass(field_type, types.ForeignKey):
       foreign_key_column_name = field_type._cls.TABLENAME+"."+field_type._cls.ID_FIELD
-      columns.append( sqlalchemy.Column( field_name, sqlalchemy.String, sqlalchemy.ForeignKey(foreign_key_column_name) ) )
+      columns.append( sqlalchemy.Column( field_name, sqlalchemy.String, sqlalchemy.ForeignKey(foreign_key_column_name), index=True ) )
     else:
       columns.append( sqlalchemy.Column( field_name,
                               sqlalchemy_types[field_type],
