@@ -68,20 +68,27 @@ def create_and_map_tables(metadata):
 
     # map the tables
     sqlalchemy.orm.mapper(Agency, agency_table) 
-    sqlalchemy.orm.mapper(Route, routes_table, properties={'agency':relationship(Agency,backref="routes")})
+    sqlalchemy.orm.mapper(Route, routes_table, 
+                          properties={'agency':relationship(Agency,backref="routes")})
     sqlalchemy.orm.mapper(Stop, stops_table)
-    sqlalchemy.orm.mapper(Trip, trips_table, properties={'route':relationship(Route, backref="trips"),
-					'service_period':relationship(ServicePeriod, backref="trips"),
-					'stop_times':relationship(StopTime, order_by=stop_times_table.c.stop_sequence)})
-    sqlalchemy.orm.mapper(StopTime, stop_times_table, properties={'trip':relationship(Trip),
-                                                                                                                                'stop':relationship(Stop, backref="stop_times")})
+    sqlalchemy.orm.mapper(Trip, trips_table, 
+                          properties={'route':relationship(Route, backref="trips"),
+					                  'service_period':relationship(ServicePeriod, backref="trips"),
+					                  'stop_times':relationship(StopTime, order_by=stop_times_table.c.stop_sequence)})
+    sqlalchemy.orm.mapper(StopTime, stop_times_table, 
+                          properties={'trip':relationship(Trip),
+                                      'stop':relationship(Stop, backref="stop_times")})
     sqlalchemy.orm.mapper(ServicePeriod, calendar_table)
-    sqlalchemy.orm.mapper(ServiceException, calendar_dates_table, properties={'service_period':relationship(ServicePeriod,backref="exceptions")})
+    sqlalchemy.orm.mapper(ServiceException, calendar_dates_table, 
+                          properties={'service_period':relationship(ServicePeriod,backref="exceptions")})
     sqlalchemy.orm.mapper(Fare, fare_attributes_table)
-    sqlalchemy.orm.mapper(FareRule, fare_rules_table, properties={'fare':relationship(Fare,backref="rules"),
-                                                                                                                                'route':relationship(Route,backref="fare_rules")})
+    sqlalchemy.orm.mapper(FareRule, fare_rules_table, 
+                          properties={'fare':relationship(Fare,backref="rules"),
+                                      'route':relationship(Route,backref="fare_rules")})
     sqlalchemy.orm.mapper(ShapePoint, shapes_table)
-    sqlalchemy.orm.mapper(Frequency, frequencies_table, properties={'trip':relationship(Trip,backref="frequencies")})
-    sqlalchemy.orm.mapper(Transfer, transfers_table, properties={"from_stop":relationship(Stop,primaryjoin=transfers_table.c.from_stop_id==stops_table.c.stop_id,backref="transfers_away"),
-                                                                                                "to_stop":relationship(Stop,primaryjoin=transfers_table.c.to_stop_id==stops_table.c.stop_id,backref="transfers_from")})
+    sqlalchemy.orm.mapper(Frequency, frequencies_table, 
+                          properties={'trip':relationship(Trip,backref="frequencies")})
+    sqlalchemy.orm.mapper(Transfer, transfers_table, 
+                          properties={"from_stop":relationship(Stop,primaryjoin=transfers_table.c.from_stop_id==stops_table.c.stop_id,backref="transfers_away"),
+                                      "to_stop":relationship(Stop,primaryjoin=transfers_table.c.to_stop_id==stops_table.c.stop_id,backref="transfers_from")})
 

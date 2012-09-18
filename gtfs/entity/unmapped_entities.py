@@ -14,23 +14,24 @@ class Entity(object):
 class ShapePoint(Entity):
     TABLENAME = "shapes"
     FIELDS = (('shape_id',str),
-                        ('shape_pt_lat',str),
-	        ('shape_pt_lon',str),
-	        ('shape_pt_sequence',int),
-	        ('shape_dist_traveled',str))
+              ('shape_pt_lat',str),
+	          ('shape_pt_lon',str),
+              ('shape_pt_sequence',int),
+              ('shape_dist_traveled',str))
     ID_FIELD = None
 
     def __repr__(self):
-        return "<ShapePoint #%s (%s, %s)>"%(self.shape_pt_sequence,self.shape_pt_lat,self.shape_pt_lon)
+        return "<ShapePoint #%s (%s, %s)>" % \
+               (self.shape_pt_sequence, self.shape_pt_lat, self.shape_pt_lon)
 
 class Agency(Entity):
     TABLENAME = "agency"
     FIELDS = (('agency_id',str),
-                        ('agency_name',str),
-	        ('agency_url',str),
-	        ('agency_timezone',str),
-	        ('agency_lang',str),
-	        ('agency_phone',str))
+              ('agency_name',str),
+              ('agency_url',str),
+              ('agency_timezone',str),
+              ('agency_lang',str),
+              ('agency_phone',str))
     ID_FIELD = "agency_id"
 
     def __repr__(self):
@@ -38,39 +39,38 @@ class Agency(Entity):
 
     def __init__(self,**kwargs):
         Entity.__init__(self, **kwargs)
-
         if not hasattr( self, "agency_id" ) or self.agency_id is None:
             self.agency_id = "__DEFAULT__"
 
 class ServicePeriod(Entity):
     TABLENAME = "calendar"
     FIELDS = (('service_id', str),
-                        ('monday', Boolean),
-	        ('tuesday', Boolean),
-	        ('wednesday', Boolean),
-	        ('thursday', Boolean),
-	        ('friday', Boolean),
-	        ('saturday', Boolean),
-	        ('sunday', Boolean),
-	        ('start_date', Date),
-	        ('end_date', Date))
+              ('monday', Boolean),
+	         ('tuesday', Boolean),
+	         ('wednesday', Boolean),
+	         ('thursday', Boolean),
+	         ('friday', Boolean),
+	         ('saturday', Boolean),
+	         ('sunday', Boolean),
+	         ('start_date', Date),
+	         ('end_date', Date))
     ID_FIELD = "service_id"
 
     def __repr__(self):
         return "<ServicePeriod %s %s%s%s%s%s%s%s>"%(self.service_id,
-                                                                                     self.monday,
-					     self.tuesday,
-					     self.wednesday,
-					     self.thursday,
-					     self.friday,
-					     self.saturday,
-					     self.sunday)
+                                                    self.monday,
+                                                    self.tuesday,
+                                                    self.wednesday,
+                                                    self.thursday,
+                                                    self.friday,
+                                                    self.saturday,
+                                                    self.sunday)
 
 class ServiceException(Entity):
     TABLENAME = "calendar_dates"
     FIELDS = (('service_id', make_gtfs_foreign_key_class(ServicePeriod)),
-                        ('date', Date),
-	        ('exception_type', str))
+              ('date', Date),
+	          ('exception_type', str))
     ID_FIELD = None
 
     def __repr__(self):
@@ -79,14 +79,14 @@ class ServiceException(Entity):
 class Route(Entity):
     TABLENAME = "routes"
     FIELDS = (('route_id',str),
-                        ('agency_id',make_gtfs_foreign_key_class(Agency)),
-	        ('route_short_name',str),
-	        ('route_long_name',str),
-	        ('route_desc',str),
-	        ('route_type',int),
-	        ('route_url',str),
-	        ('route_color',str),
-	        ('route_text_color',str))
+              ('agency_id',make_gtfs_foreign_key_class(Agency)),
+              ('route_short_name',str),
+              ('route_long_name',str),
+              ('route_desc',str),
+              ('route_type',int),
+              ('route_url',str),
+              ('route_color',str),
+              ('route_text_color',str))
     ID_FIELD = "route_id"
 
     def __repr__(self):
@@ -94,22 +94,21 @@ class Route(Entity):
 
     def __init__(self, **kwargs):
         Entity.__init__(self, **kwargs)
-
         if not hasattr( self, "agency_id" ) or self.agency_id is None:
             self.agency_id = "__DEFAULT__"
 
 class Stop(Entity):
     TABLENAME = "stops"
     FIELDS = (('stop_id',str),
-                        ('stop_code',str),
-	        ('stop_name',str),
-	        ('stop_desc',str),
-	        ('stop_lat',float),
-	        ('stop_lon',float),
-	        ('zone_id',str),
-	        ('stop_url',str),
-	        ('location_type',str),
-	        ('parent_station',str))
+              ('stop_code',str),
+              ('stop_name',str),
+              ('stop_desc',str),
+              ('stop_lat',float),
+              ('stop_lon',float),
+              ('zone_id',str),
+              ('stop_url',str),
+              ('location_type',str),
+              ('parent_station',str))
     ID_FIELD = "stop_id"
 
     def __repr__(self):
@@ -118,13 +117,13 @@ class Stop(Entity):
 class Trip(Entity):
     TABLENAME = "trips"
     FIELDS = (('route_id',make_gtfs_foreign_key_class(Route)),
-                        ('service_id',make_gtfs_foreign_key_class(ServicePeriod)),
-	        ('trip_id',str),
-	        ('trip_headsign',str),
-	        ('trip_short_name',str),
-	        ('direction_id',str),
-	        ('block_id',str),
-	        ('shape_id',str))
+              ('service_id',make_gtfs_foreign_key_class(ServicePeriod)),
+              ('trip_id',str),
+              ('trip_headsign',str),
+              ('trip_short_name',str),
+              ('direction_id',str),
+              ('block_id',str),
+              ('shape_id',str))
     ID_FIELD = "trip_id"
 
     def __repr__(self):
@@ -133,14 +132,14 @@ class Trip(Entity):
 class StopTime(Entity):
     TABLENAME = "stop_times"
     FIELDS = (('trip_id',make_gtfs_foreign_key_class(Trip)),
-                        ('arrival_time',Time),
-	        ('departure_time',Time),
-	        ('stop_id',make_gtfs_foreign_key_class(Stop)),
-	        ('stop_sequence',int),
-	        ('stop_headsign',str),
-	        ('pickup_type',str),
-	        ('drop_off_type',str),
-	        ('shape_dist_traveled',float))
+              ('arrival_time',Time),
+              ('departure_time',Time),
+              ('stop_id',make_gtfs_foreign_key_class(Stop)),
+              ('stop_sequence',int),
+              ('stop_headsign',str),
+              ('pickup_type',str),
+              ('drop_off_type',str),
+              ('shape_dist_traveled',float))
     ID_FIELD = None
     
     def __repr__(self):
@@ -149,11 +148,11 @@ class StopTime(Entity):
 class Fare(Entity):
     TABLENAME = "fare_attributes"
     FIELDS = (('fare_id',str),
-                        ('price',str),
-	        ('currency_type',str),
-	        ('payment_method',str),
-	        ('transfers',int),
-	        ('transfer_duration',str))
+              ('price',str),
+	         ('currency_type',str),
+	         ('payment_method',str),
+	         ('transfers',int),
+	         ('transfer_duration',str))
     ID_FIELD = 'fare_id'
 
     def __repr__(self):
@@ -162,18 +161,18 @@ class Fare(Entity):
 class FareRule(Entity):
     TABLENAME = "fare_rules"
     FIELDS = (('fare_id',make_gtfs_foreign_key_class(Fare)),
-                        ('route_id',make_gtfs_foreign_key_class(Route)),
-	        ('origin_id',str),
-	        ('destination_id',str),
-	        ('contains_id',str))
+              ('route_id',make_gtfs_foreign_key_class(Route)),
+	          ('origin_id',str),
+	          ('destination_id',str),
+	          ('contains_id',str))
     ID_FIELD = None
 
 class Frequency(Entity):
     TABLENAME = "frequencies"
     FIELDS = (('trip_id',make_gtfs_foreign_key_class(Trip)),
-                        ('start_time',str),
-	        ('end_time',str),
-	        ('headway_secs',int))
+              ('start_time',str),
+	          ('end_time',str),
+	          ('headway_secs',int))
     ID_FIELD = None
 
     def __repr__(self):
@@ -182,7 +181,10 @@ class Frequency(Entity):
 class Transfer(Entity):
     TABLENAME = "transfers"
     FIELDS = (('from_stop_id',make_gtfs_foreign_key_class(Stop)),
-                        ('to_stop_id',make_gtfs_foreign_key_class(Stop)),
-	        ('transfer_type',int),
-	        ('min_transfer_time',str))
+              ('to_stop_id',make_gtfs_foreign_key_class(Stop)),
+	          ('transfer_type',int),
+	          ('min_transfer_time',str))
     ID_FIELD = None
+
+    def __repr__(self):
+        return "<Transfer %s-%s>" & (self.from_stop_id, self.to_stop_id)

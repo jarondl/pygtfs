@@ -4,8 +4,8 @@ from entity import *
 class Schedule:
     def __init__( self, db_filename ):
         self.db_filename = db_filename
-
-        self.engine = sqlalchemy.create_engine('sqlite:///%s'%self.db_filename, echo=False)
+        self.engine = sqlalchemy.create_engine('sqlite:///%s' % self.db_filename, 
+                                               echo=False)
         Session = sqlalchemy.orm.sessionmaker(bind=self.engine)
         self.session = Session()
 
