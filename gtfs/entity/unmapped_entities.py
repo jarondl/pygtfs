@@ -1,6 +1,5 @@
-from ..types import make_gtfs_foreign_key_class, Boolean, Time, Date
 
-from sqlalchemy import Column, String
+from sqlalchemy import Column, ForeignKey, String, Integer, Float, Boolean, Time, Date
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -46,7 +45,7 @@ class Route(Base):
     isGTFSRequired = True
 
     route_id = Column(String, primary_key=True)
-    agency_id = Column(String, ForeignKey(agency_id))
+    agency_id = Column(String, ForeignKey('%s.agency_id' % Agency.__tablename__))
     route_short_name = Column(String)
     route_long_name = Column(String)
     route_desc = Column(String)
@@ -84,20 +83,21 @@ class ServiceException(Base):
     __tablename__ = 'calendar_dates'
     isGTFSRequired = False
     
-    service_id = Column(String, ForeignKey(Service), primary_key=True)
+    service_id = Column(String, ForeignKey('%s.service_id' % Service.__tablename__), 
+                        primary_key=True)
     date = Column(Date, primary_key=True)
     exception_type = Column(String)
 
     def __repr__(self):
-        return '<ServiceException %s %s>' % (self.date, self.exception_type)
+        return '<ServiceException %s %s>' % (self.service_id, self.date)
 
 class Trip(Base):
     
     __tablename__ = 'trips'
     isGTFSRequired = True
     
-    route_id = Column(String, ForeignKey(Route))
-    service_id = Column(String, ForeignKey(Service))
+    route_id = Column(String, ForeignKey('%s.route_id' % Route.__tablename__))
+    service_id = Column(String, ForeignKey('%s.service_id' % Service.__tablename__))
     trip_id = Column(String, primary_key=True)
     trip_headsign = Column(String)
     trip_short_name = Column(String)
@@ -113,10 +113,12 @@ class StopTime(Base):
     __tablename__ = 'stop_times'
     isGTFSRequired = True
     
-    trip_id = Column(String, ForeignKey(Trip), primary_key=True)
+    trip_id = Column(String, ForeignKey('%s.trip_id' % Trip.__tablename__), 
+                     primary_key=True)
     arrival_time = Column(Time)
     departure_time = Column(Time)
-    stop_id = Column(String, ForeignKey(Stop), primary_key=True)
+    stop_id = Column(String, ForeignKey('%s.stop_id' % Stop.__tablename__), 
+                     primary_key=True)
     stop_sequence = Column(Integer, primary_key=True)
     stop_headsign = Column(String)
     pickup_type = Column(String)
@@ -148,8 +150,10 @@ class FareRule(Base):
     __tablename__ = 'fare_rules'
     isGTFSRequired = False
     
-    fare_id = Column(String, ForeignKey(Fare), primary_key=True)
-    route_id = Column(String, ForeignKey(Route), primary_key=True)
+    fare_id = Column(String, ForeignKey('%s.fare_id', Fare.__tablename__), 
+                     primary_key=True)
+    route_id = Column(String, ForeignKey('%s.route_id', Route.__tablename__), 
+                      primary_key=True)
     origin_id = Column(String, primary_key=True)
     destination_id = Column(String, primary_key=True)
     contains_id = Column(String, primary_key=True)
@@ -161,7 +165,7 @@ class FareRule(Base):
                                                self.destination_id,
                                                self.contains_id)
 
-class ShapePoint(Entity):
+class ShapePoint(Base):
     
     __tablename__ = 'shapes'
     isGTFSRequired = False
@@ -175,12 +179,13 @@ class ShapePoint(Entity):
     def __repr__(self):
         return '<ShapePoint %s>' % self.shape_id
 
-class Frequency(Entity):
+class Frequency(Base):
     
     __tablename__ = 'frequencies'
     isGTFSRequired = False
     
-    trip_id = Column(String, ForeignKey(Trip), primary_key=True)
+    trip_id = Column(String, ForeignKey('%s.trip_id' % Trip.__tablename__), 
+                     primary_key=True)
     start_time = Column(String, primary_key=True)
     end_time = Column(String, primary_key=True)
     headway_secs = Column(Integer)
@@ -190,12 +195,15 @@ class Frequency(Entity):
                                          self.start_time,
                                          self.end_time)
 
-class Transfer(Entity):
+class Transfer(Base):
     
     __tablename__ = 'transfers'
+    isGTFSRequired = False
     
-    from_stop_id = Column(String, ForeignKey(Stop))
-    to_stop_id = Column(String, ForeignKey(Stop))
+    from_stop_id = Column(String, ForeignKey('%s.stop_id' % Stop.__tablename__), 
+                          primary_key=True)
+    to_stop_id = Column(String, ForeignKey('%s.stop_id' % Stop.__tablename__),
+                        primary_key=True)
     transfer_type = Column(Integer)
     min_transfer_time = Column(String)
 
