@@ -1,7 +1,4 @@
-# import map_entities
-import sqlalchemy
-
+from map_entities import *
 from unmapped_entities import *
 
-metadata = sqlalchemy.MetaData()
-#map_entities.create_and_map_tables(metadata)
+create_and_map_tables(Entity.metadata)

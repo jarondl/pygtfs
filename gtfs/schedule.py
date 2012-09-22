@@ -1,8 +1,10 @@
 import sqlalchemy
+import sqlalchemy.orm
 from entity import *
 
 class Schedule:
-    def __init__( self, db_filename ):
+    
+    def __init__(self, db_filename):
         self.db_filename = db_filename
         self.engine = sqlalchemy.create_engine('sqlite:///%s' % self.db_filename, 
                                                echo=False)
@@ -10,20 +12,36 @@ class Schedule:
         self.session = Session()
 
     @property
-    def routes(self):
-        return self.session.query(Route).all()
-
-    @property
     def agencies(self):
         return self.session.query(Agency).all()
-
-    @property
-    def service_periods(self):
-        return self.session.query(ServicePeriod).all()
 
     @property
     def stops(self):
         return self.session.query(Stop).all()
 
-    def create_tables( self ):
+    @property
+    def routes(self):
+        return self.session.query(Route).all()
+
+    @property
+    def services(self):
+        return self.session.query(Service).all()
+
+    @property
+    def service_exceptions(self):
+        return self.session.query(ServiceException).all()
+
+    @property
+    def trips(self):
+        return self.session.query(Trip).all()
+
+    @property
+    def stop_times(self):
+        return self.session.query(StopTime).all()
+
+    @property
+    def feed_info(self):
+        return self.session.query(FeedInfo).all()
+
+    def create_tables(self, metadata):
         metadata.create_all(self.engine) 

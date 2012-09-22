@@ -1,162 +1,353 @@
+from sqlalchemy import Table, MetaData, Column, ForeignKey
+from sqlalchemy import String, Integer, Float, Boolean, Date, Interval, PickleType
+import datetime
+import pytz
+import re
 
-from sqlalchemy import Column, ForeignKey, String, Integer, Float, Boolean, Time, Date
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
-
-class Agency(Base):
+def int_hex(x):
+    return int(x, 16)
     
-    __tablename__ = 'agency'
-    isGTFSRequired = True
+def date_yyyymmdd(x):
+    return datetime.datetime.strptime(x, '%Y%m%d').date()
+
+def timedelta_hms(x):
+    (hours, minutes, seconds) = map(int, re.split(':', x))
+    return datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
+
+class Field(object):
+    """Represents an attribute to store in the database. An Entity object is
+    associated with an array of Fields in Entity.fields. Like SQLAlchemy's 
+    Column() but with some extra fields: 
     
-    agency_id = Column(String, primary_key=True)
-    agency_name = Column(String)
-    agency_url = Column(String)
-    agency_timezone = Column(String)
-    agency_lang = Column(String)
-    agency_phone = Column(String)
-    agency_fare_url = Column(String)
+    - name: column name
+    - column_type: SQLAlchemy column type, such as String, Integer, etc.
+    - foreign_key: name of foreign key (the name of a field in the table, like
+      tablename.field, not a call to ForeignKey() itself) (default None)
+    - primary_key: whether this field is a primary key or not (default False)
+    - cast: a function to call on the field when instantiating the Entity, to
+      convert its type to the appropriate value (default None, no cast)
+    - mandatory: is this field's presence mandatory in GTFS? (default False)
+    - default: if this field is omitted or a blank string, what is the default 
+      value? (default None)
+    """
+    def __init__(self, name, column_type, foreign_key=None, primary_key=False,
+                 cast=None, mandatory=False, default=None):
+        self.name = name
+        self.column_type = column_type
+        self.foreign_key = foreign_key
+        self.primary_key = primary_key
+        self.cast = cast
+        self.mandatory = mandatory
+        self.default = default
+
+class EntityMissingFieldError(Exception):
+    """Raised when a subclass of Entity is instantiated without mandatory fields."""
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+class EntityBadFieldError(Exception):
+    """Raised when a subclass of Entity is instantiated with improper values."""
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+class Entity(object):
+    """Represents the base class of objects to be stored by SQLAlchemy. 
+    An Entity is associated with an array of Field objects. Entities are 
+    unmapped, mapping is done separately via the "classical" method 
+    (declarative being in my opinion a bigger pain to implement here).
+    """
+    
+    metadata = MetaData()
+    fields = []
+    
+    def __init__(self, **kwargs):
+        for field in self.fields:
+            if field.name in kwargs:
+                field_value = kwargs[field.name]
+                if field_value == '':
+                    setattr(self, field.name, field.default)
+                elif field_value is not None and field.cast is not None:
+                    setattr(self, field.name, field.cast(field_value))
+                else:
+                    setattr(self, field.name, field_value)
+            else:
+                setattr(self, field.name, field.default)
+            
+        self.check_mandatory_fields()
+    
+    def check_mandatory_fields(self):
+        for field in self.fields:
+            if field.mandatory and getattr(self, field.name, None) is None:
+                raise EntityMissingFieldError('Missing field %s in %s' % \
+                                              (field.name, self.__class__.__name__))
+
+def generate_table():
+    columns = []
+    for field in fields:
+        if f.foreign_key is not None:
+            column = Column(f.name, f.column_type, ForeignKey(f.foreign_key),
+                            primary_key=f.primary_key)
+        else:
+            column = Column(f.name, f.column_type, primary_key=f.primary_key)
+        columns.append(column)
+    return Table(self.table_name, Entity.metadata, *columns)
+
+class Agency(Entity):
+    """A transit agency."""
+    
+    table_name = 'agency'
+    gtfs_required = True
+    
+    # Note that agency_id is not mandatory according to GTFS. We assume here 
+    # that agency_id and agency_name together are enough for a primary key - 
+    # hope people aren't both omitting agency_ids and duping agency_names. 
+    
+    fields = [Field('agency_id', String, cast=str, primary_key=True), 
+              Field('agency_name', String, cast=str, mandatory=True, primary_key=True),
+              Field('agency_url', String, cast=str, mandatory=True),
+              Field('agency_timezone', PickleType, cast=pytz.timezone, mandatory=True),
+              Field('agency_lang', String, cast=str),
+              Field('agency_phone', String, cast=str),
+              Field('agency_fare_url', String, cast=str),
+             ]
     
     def __repr__(self):
-        return '<Agency %s>' % self.agency_id
-
-class Stop(Base):
+        return '<Agency %s: %s>' % (getattr(self, 'agency_id', None), 
+                                    self.agency_name)
+                                    
+class Stop(Entity):
+    """A physical stop, where passengers embark and disembark."""
     
-    __tablename__ = 'stops'
-    isGTFSRequired = True
+    table_name = 'stops'
+    gtfs_required = True
     
-    stop_id = Column(String, primary_key=True)
-    stop_code = Column(String)
-    stop_name = Column(String)
-    stop_desc = Column(String)
-    stop_lat = Column(Float)
-    stop_lon = Column(Float)
-    zone_id = Column(String)
-    stop_url = Column(String)
-    location_type = Column(String)
-    parent_station = Column(String)
+    fields = [Field('stop_id', String, cast=str, primary_key=True, mandatory=True),
+              Field('stop_code', String, cast=str),
+              Field('stop_name', String, cast=str, mandatory=True),
+              Field('stop_desc', String, cast=str),
+              Field('stop_lat', Float, cast=float, mandatory=True),
+              Field('stop_lon', Float, cast=float, mandatory=True),
+              Field('zone_id', String, cast=str),
+              Field('stop_url', String, cast=str),
+              Field('location_type', Integer, cast=int, default=0),
+              Field('parent_station', Integer, cast=int, default=0),
+              Field('stop_timezone', String, cast=pytz.timezone),
+              Field('wheelchair_boarding', Integer, cast=int, default=0),
+             ]
 
     def __repr__(self):
-        return '<Stop %s>' % self.stop_id
-
-class Route(Base):
+        return '<Stop %s: %s>' % (self.stop_id, self.stop_name)
     
-    __tablename__ = 'routes'
-    isGTFSRequired = True
+    def __init__(self, **kwargs):
+        Entity.__init__(self, **kwargs)
+        if self.stop_lat < -180 or self.stop_lat > 180:
+            raise EntityBadFieldError('stop_lat %f not in range [-180, 180] in %s' % \
+                                      (self.stop_lat, repr(self)))
+        if self.stop_lon < -180 or self.stop_lon > 180:
+            raise EntityBadFieldError('stop_lon %f not in range [-180, 180] in %s' % \
+                                      (self.stop_lon, repr(self)))
+        if self.location_type not in [0,1]:
+            raise EntityBadFieldError('location_type %d not in {0,1} in %s' % \
+                                      (self.location_type, repr(self)))
+        if self.parent_station not in [0,1]:
+            raise EntityBadFieldError('parent_station %d not in {0,1} in %s' % \
+                                      (self.parent_station, repr(self)))
+        if self.wheelchair_boarding not in [0,1,2]:
+            raise EntityBadFieldError('wheelchair_boarding %d not in {0,1,2} in %s' % \
+                                      (self.wheelchair_boarding, repr(self)))
 
-    route_id = Column(String, primary_key=True)
-    agency_id = Column(String, ForeignKey('%s.agency_id' % Agency.__tablename__))
-    route_short_name = Column(String)
-    route_long_name = Column(String)
-    route_desc = Column(String)
-    route_type = Column(Integer)
-    route_url = Column(String)
-    route_color = Column(String)
-    route_text_color = Column(String)
+class Route(Entity):
+    """A sequence of stops taken by a transit vehicle."""
+    
+    # Note: 16777215 = FFFFFF in hex
+    
+    table_name = 'routes'
+    gtfs_required = True
+
+    fields = [Field('route_id', String, cast=str, primary_key=True, mandatory=True),
+              Field('agency_id', String, foreign_key='%s.agency_id' % Agency.table_name, cast=str),
+              Field('route_short_name', String, cast=str, mandatory=True, default=''),
+              Field('route_long_name', String, cast=str, mandatory=True, default=''),
+              Field('route_desc', String, cast=str),
+              Field('route_type', Integer, cast=int, mandatory=True),
+              Field('route_url', String, cast=str),
+              Field('route_color', Integer, cast=int_hex, default=16777215),
+              Field('route_text_color', Integer, cast=int_hex, default=0),
+             ]
     
     def __repr__(self):
-        return '<Route %s>' % self.route_id
+        return '<Route %s: %s>' % (self.route_id, self.route_short_name)
+    
+    def __init__(self, **kwargs):
+        Entity.__init__(self, **kwargs)
+        if self.route_type not in range(8):
+            raise EntityBadFieldError('route_type %d not an integer from 0 to 7 in %s' % \
+                                      (self.route_type, repr(self)))
+        if self.route_color < 0 or self.route_color > 16777215:
+            raise EntityBadFieldError('route_color %s must be a hex between 000000 and FFFFFF in %s' % \
+                                      (kwargs['route_color'], repr(self)))
+        if self.route_color < 0 or self.route_text_color > 16777215:
+            raise EntityBadFieldError('route_text_color %s must be a hex between 000000 and FFFFFF in %s' % \
+                                      (kwargs['route_text_color'], repr(self)))
 
 # Note: using calendar_dates.txt without calendar.txt is not yet supported
 
-class Service(Base):
+class Service(Entity):
+    """A calendar of service - indicates what days of week service is running."""
     
-    __tablename__ = 'calendar'
-    isGTFSRequired = True
+    table_name = 'calendar'
+    gtfs_required = False   # if this is absent you must have a calendar_dates file
     
-    service_id = Column(String, primary_key=True)
-    monday = Column(Boolean)
-    tuesday = Column(Boolean)
-    wednesday = Column(Boolean)
-    thursday = Column(Boolean)
-    friday = Column(Boolean)
-    saturday = Column(Boolean)
-    sunday = Column(Boolean)
-    start_date = Column(Date)
-    end_date = Column(Date)
+    fields = [Field('service_id', String, cast=str, primary_key=True, mandatory=True),
+              Field('monday', Boolean, cast=bool, mandatory=True),
+              Field('tuesday', Boolean, cast=bool, mandatory=True),
+              Field('wednesday', Boolean, cast=bool, mandatory=True),
+              Field('thursday', Boolean, cast=bool, mandatory=True),
+              Field('friday', Boolean, cast=bool, mandatory=True),
+              Field('saturday', Boolean, cast=bool, mandatory=True),
+              Field('sunday', Boolean, cast=bool, mandatory=True),
+              Field('start_date', Date, cast=date_yyyymmdd, mandatory=True),
+              Field('end_date', Date, cast=date_yyyymmdd, mandatory=True),
+             ]
 
     def __repr__(self):
-        return '<Service %s>' % self.service_id
+        dayofweek = ''
+        if self.monday: dayofweek += 'M'
+        if self.tuesday: dayofweek += 'T'
+        if self.wednesday: dayofweek += 'W'
+        if self.thursday: dayofweek += 'Th'
+        if self.friday: dayofweek += 'F'
+        if self.saturday: dayofweek += 'S'
+        if self.sunday: dayofweek += 'Su'
+        return '<Service %s (%s)>' % (self.service_id, dayofweek)
 
-class ServiceException(Base):
+class ServiceException(Entity):
+    """Single-day exceptions to the rules in Services."""
     
-    __tablename__ = 'calendar_dates'
-    isGTFSRequired = False
+    table_name = 'calendar_dates'
+    gtfs_required = False
     
-    service_id = Column(String, ForeignKey('%s.service_id' % Service.__tablename__), 
-                        primary_key=True)
-    date = Column(Date, primary_key=True)
-    exception_type = Column(String)
+    fields = [Field('service_id', String, foreign_key='%s.service_id' % Service.table_name, 
+                    cast=str, primary_key=True, mandatory=True),
+              Field('date', Date, cast=date_yyyymmdd, primary_key=True, mandatory=True),
+              Field('exception_type', Integer, cast=int, mandatory=True),
+             ]
 
     def __repr__(self):
-        return '<ServiceException %s %s>' % (self.service_id, self.date)
+        return '<ServiceException %s: %s>' % (self.service_id, self.date)
+    
+    def __init__(self, **kwargs):
+        Entity.__init__(self, **kwargs)
+        if self.exception_type not in [1,2]:
+            raise EntityBadFieldError('exception_type %d not 1 or 2 in %s' % \
+                                      (self.exception_type, repr(self)))
 
-class Trip(Base):
+class Trip(Entity):
+    """A travel itinerary for a transit vehicle."""
     
-    __tablename__ = 'trips'
-    isGTFSRequired = True
+    table_name = 'trips'
+    gtfs_required = True
     
-    route_id = Column(String, ForeignKey('%s.route_id' % Route.__tablename__))
-    service_id = Column(String, ForeignKey('%s.service_id' % Service.__tablename__))
-    trip_id = Column(String, primary_key=True)
-    trip_headsign = Column(String)
-    trip_short_name = Column(String)
-    direction_id = Column(String)
-    block_id = Column(String)
-    shape_id = Column(String)
+    fields = [Field('route_id', String, foreign_key='%s.route_id' % Route.table_name, 
+                    cast=str, mandatory=True),
+              Field('service_id', String, foreign_key='%s.service_id' % Service.table_name, 
+                    cast=str, mandatory=True),
+              Field('trip_id', String, cast=str, primary_key=True, mandatory=True),
+              Field('trip_headsign', String, cast=str),
+              Field('trip_short_name', String, cast=str),
+              Field('direction_id', Integer, cast=int),
+              Field('block_id', String, cast=str),
+              Field('shape_id', String, cast=str),
+             ]
 
     def __repr__(self):
         return '<Trip %s>' % self.trip_id
+    
+    def __init__(self, **kwargs):
+        Entity.__init__(self, **kwargs)
+        if getattr(self, 'direction_id', None) is not None:
+            if self.direction_id not in [0,1]:
+                raise EntityBadFieldError('direction_id %d not 1 or 2 in %s' % \
+                                          (self.direction_id, repr(self)))
 
-class StopTime(Base):
+class StopTime(Entity):
+    """A stop along a Trip: arrival and departure."""
     
-    __tablename__ = 'stop_times'
-    isGTFSRequired = True
+    table_name = 'stop_times'
+    gtfs_required = True
     
-    trip_id = Column(String, ForeignKey('%s.trip_id' % Trip.__tablename__), 
-                     primary_key=True)
-    arrival_time = Column(Time)
-    departure_time = Column(Time)
-    stop_id = Column(String, ForeignKey('%s.stop_id' % Stop.__tablename__), 
-                     primary_key=True)
-    stop_sequence = Column(Integer, primary_key=True)
-    stop_headsign = Column(String)
-    pickup_type = Column(String)
-    drop_off_type = Column(String)
-    shape_dist_traveled = Column(Float)
-
-    def __repr__(self):
-        return '<StopTime %s-%s %d>' % (self.trip_id, 
-                                        self.stop_id, 
-                                        self.stop_sequence)
-                                        
-class Fare(Base):
-    
-    __tablename__ = 'fare_attributes'
-    isGTFSRequired = False
-    
-    fare_id = Column(String, primary_key=True)
-    price = Column(String)
-    currency_type = Column(String)
-    payment_method = Column(String)
-    transfers = Column(Integer)
-    transfer_duration = Column(String)
+    fields = [Field('trip_id', String, foreign_key='%s.trip_id' % Trip.table_name,
+                    cast=str, primary_key=True, mandatory=True),
+              Field('arrival_time', Interval, cast=timedelta_hms, mandatory=True),
+              Field('departure_time', Interval, cast=timedelta_hms, mandatory=True),
+              Field('stop_id', String, foreign_key='%s.stop_id' % Stop.table_name, 
+                    cast=str, primary_key=True, mandatory=True),
+              Field('stop_sequence', Integer, cast=int, primary_key=True, mandatory=True),
+              Field('stop_headsign', String, cast=str),
+              Field('pickup_type', Integer, cast=int, default=0),
+              Field('drop_off_type', Integer, cast=int, default=0),
+              Field('shape_dist_traveled', Float, cast=float),
+             ]
 
     def __repr__(self):
-        return '<Fare %s>' % (self.fare_id)
+        return '<StopTime %s: %d>' % (self.trip_id, self.stop_sequence)
+    
+    def __init__(self, **kwargs):
+        Entity.__init__(self, **kwargs)
+        if self.arrival_time > self.departure_time:
+            raise EntityBadFieldError('arrival time %s must be less than departure time %s in %s' % \
+                                      (self.arrival_time, self.departure_time, repr(self)))
+        if self.stop_sequence < 0:
+            raise EntityBadFieldError('stop_sequence %d cannot be negative in %s' % \
+                                      (self.stop_sequence, repr(self)))
+        if self.pickup_type not in range(3):
+            raise EntityBadFieldError('pickup_type %d not in {0,1,2,3} in %s' % \
+                                      (self.pickup_type, repr(self)))
+        if self.drop_off_type not in range(3):
+              raise EntityBadFieldError('drop_off_type %d not in {0,1,2,3} in %s' % \
+                                        (self.drop_off_type, repr(self)))
 
-class FareRule(Base):
+class Fare(Entity):
+    """Passenger fare classifications."""
     
-    __tablename__ = 'fare_rules'
-    isGTFSRequired = False
+    table_name = 'fare_attributes'
+    gtfs_required = False
     
-    fare_id = Column(String, ForeignKey('%s.fare_id', Fare.__tablename__), 
-                     primary_key=True)
-    route_id = Column(String, ForeignKey('%s.route_id', Route.__tablename__), 
-                      primary_key=True)
-    origin_id = Column(String, primary_key=True)
-    destination_id = Column(String, primary_key=True)
-    contains_id = Column(String, primary_key=True)
+    fields = [Field('fare_id', String, cast=str, primary_key=True, mandatory=True),
+              Field('price', Float, cast=float, mandatory=True),
+              Field('currency_type', String, cast=str, mandatory=True),
+              Field('payment_method', Integer, cast=int, mandatory=True),
+              Field('transfers', Integer, cast=int),
+              Field('transfer_duration', Float, cast=float),
+             ]
+
+    def __repr__(self):
+        return '<Fare %s>' % self.fare_id
+    
+    def __init__(self, **kwargs):
+        Entity.__init__(self, **kwargs)
+        if self.payment_method not in [0,1]:
+            raise EntityBadFieldError('payment_method %d not in {0,1} in %s' % \
+                                      (self.payment_method, repr(self)))
+
+class FareRule(Entity):
+    """Rules determining how fares are applied."""
+    
+    table_name = 'fare_rules'
+    gtfs_required = False
+    
+    fields = [Field('fare_id', String, foreign_key='%s.fare_id' % Fare.table_name, 
+                    cast=str, primary_key=True, mandatory=True),
+              Field('route_id', String, foreign_key='%s.route_id' % Route.table_name,
+                    cast=str, primary_key=True, default=''),
+              Field('origin_id', String, cast=str, primary_key=True, default=''),
+              Field('destination_id', String, cast=str, primary_key=True, default=''),
+              Field('contains_id', String, cast=str, primary_key=True, default=''),
+             ]
     
     def __repr__(self):
         return '<FareRule %s: %s %s %s %s>' % (self.fare_id, 
@@ -165,47 +356,95 @@ class FareRule(Base):
                                                self.destination_id,
                                                self.contains_id)
 
-class ShapePoint(Base):
+class ShapePoint(Entity):
+    """Rules indicating how to draw lines on a map."""
     
-    __tablename__ = 'shapes'
-    isGTFSRequired = False
+    table_name = 'shapes'
+    gtfs_required = False
     
-    shape_id = Column(String, primary_key=True)
-    shape_pt_lat = Column(String)
-    shape_pt_lon = Column(String)
-    shape_pt_sequence = Column(Integer)
-    shape_dist_traveled = Column(String)
+    fields = [Field('shape_id', String, cast=str, primary_key=True, mandatory=True),
+              Field('shape_pt_lat', Float, cast=float, primary_key=True, mandatory=True),
+              Field('shape_pt_lon', Float, cast=float, primary_key=True, mandatory=True),
+              Field('shape_pt_sequence', Integer, cast=int, primary_key=True, mandatory=True),
+              Field('shape_dist_traveled', Float, cast=float),
+             ]
 
     def __repr__(self):
         return '<ShapePoint %s>' % self.shape_id
+    
+    def __init__(self, **kwargs):
+        Entity.__init__(self, **kwargs)
+        if self.shape_pt_lat < -180 or self.shape_pt_lat > 180:
+            raise EntityBadFieldError('shape_pt_lat %f not in [-180,180] in %s' % \
+                                      (self.shape_pt_lat, repr(self)))
+        if self.shape_pt_lon < -180 or self.shape_pt_lon > 180:
+            raise EntityBadFieldError('shape_pt_lon %f not in [-180,180] in %s' % \
+                                      (self.shape_pt_lon, repr(self)))
+        if self.shape_pt_sequence < 0:
+            raise EntityBadFieldError('shape_pt_sequence %d cannot be negative in %s' % \
+                                      (self.shape_pt_sequence, repr(self)))
 
-class Frequency(Base):
+class Frequency(Entity):
+    """Schedules without fixed stop times."""
     
-    __tablename__ = 'frequencies'
-    isGTFSRequired = False
+    table_name = 'frequencies'
+    gtfs_required = False
     
-    trip_id = Column(String, ForeignKey('%s.trip_id' % Trip.__tablename__), 
-                     primary_key=True)
-    start_time = Column(String, primary_key=True)
-    end_time = Column(String, primary_key=True)
-    headway_secs = Column(Integer)
+    fields = [Field('trip_id', String, foreign_key='%s.trip_id' % Trip.table_name, 
+                    cast=str, primary_key=True, mandatory=True),
+              Field('start_time', Interval, cast=timedelta_hms, 
+                    primary_key=True, mandatory=True),
+              Field('end_time', Interval, cast=timedelta_hms, 
+                    primary_key=True, mandatory=True),
+              Field('headway_secs', Integer, cast=int, mandatory=True),
+              Field('exact_times', Integer, cast=int, default=0)
+             ]
 
     def __repr__(self):
-        return '<Frequency %s %s-%s>' % (self.trip_id,
-                                         self.start_time,
-                                         self.end_time)
+        return '<Frequency %s %s-%s>' % (self.trip_id, self.start_time, self.end_time)
 
-class Transfer(Base):
+    def __init__(self, **kwargs):
+        Entity.__init__(self, **kwargs)
+        if self.exact_times not in [0,1]:
+            raise EntityBadFieldError('exact_times %d not in {0,1} in %s' % \
+                                      (self.exact_times, repr(self)))
+
+class Transfer(Entity):
+    """Extra rules for transfers."""
     
-    __tablename__ = 'transfers'
-    isGTFSRequired = False
+    table_name = 'transfers'
+    gtfs_required = False
     
-    from_stop_id = Column(String, ForeignKey('%s.stop_id' % Stop.__tablename__), 
-                          primary_key=True)
-    to_stop_id = Column(String, ForeignKey('%s.stop_id' % Stop.__tablename__),
-                        primary_key=True)
-    transfer_type = Column(Integer)
-    min_transfer_time = Column(String)
+    fields = [Field('from_stop_id', String, foreign_key='%s.stop_id' % Stop.table_name, 
+                    cast=str, primary_key=True, mandatory=True),
+              Field('to_stop_id', String, foreign_key='%s.stop_id' % Stop.table_name,
+                    cast=str, primary_key=True, mandatory=True),
+              Field('transfer_type', Integer, cast=int, mandatory=True, default=0),
+              Field('min_transfer_time', String, cast=str),
+             ]
 
     def __repr__(self):
         return "<Transfer %s-%s>" % (self.from_stop_id, self.to_stop_id)
+
+    def __init__(self, **kwargs):
+        Entity.__init__(self, **kwargs)
+        if self.transfer_type not in range(3):
+            raise EntityBadFieldError('exact_times %d not in {0,1} in %s' % \
+                                      (self.transfer_type, repr(self)))
+
+class FeedInfo(Entity):
+    """Information about the feed."""
+    
+    table_name = 'feed_info'
+    gtfs_required = False
+    
+    fields = [Field('feed_publisher_name', String, cast=str, primary_key=True, mandatory=True),
+              Field('feed_publisher_url', String, cast=str, mandatory=True),
+              Field('feed_lang', String, cast=str, mandatory=True),
+              Field('feed_start_date', Date, cast=date_yyyymmdd),
+              Field('feed_end_date', Date, cast=date_yyyymmdd),
+              Field('feed_version', String, cast=str),
+             ]
+    
+    def __repr__(self):
+        return "<FeedInfo %s>" % self.feed_publisher_name
