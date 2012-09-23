@@ -40,6 +40,26 @@ class Schedule:
         return self.session.query(StopTime).all()
 
     @property
+    def fares(self):
+        return self.session.query(Fare).all()
+            
+    @property
+    def fare_rules(self):
+        return self.session.query(FareRule).all()
+                
+    @property
+    def shape_points(self):
+        return self.session.query(ShapePoint).all()
+                    
+    @property
+    def frequencies(self):
+        return self.session.query(Frequency).all()
+        
+    @property
+    def transfers(self):
+        return self.session.query(Transfer).all()
+    
+    @property
     def feed_info(self):
         return self.session.query(FeedInfo).all()
 
