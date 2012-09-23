@@ -1,12 +1,12 @@
-import os
 from codecs import iterdecode
 from zipfile import ZipFile
+import os
 import csv
 
 class Record(object):
     """A Record is a single row in a CSV file"""
 
-    def __init__(self,header,row):
+    def __init__(self, header, row):
         self.header = header
         self.row = row 
 

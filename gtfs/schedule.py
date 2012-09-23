@@ -3,6 +3,7 @@ import sqlalchemy.orm
 from entity import *
 
 class Schedule:
+    """Represents a full GTFS data set."""
     
     def __init__(self, db_filename):
         self.db_filename = db_filename

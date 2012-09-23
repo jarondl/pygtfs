@@ -1,7 +1,7 @@
 from entity import *
 from schedule import Schedule
+from sqlalchemy.orm.exc import UnmappedInstanceError
 import feed
-import sqlalchemy.orm.exc
 import sys
 
 def load(feed_filename, db_filename=":memory:"):
@@ -41,7 +41,7 @@ def load(feed_filename, db_filename=":memory:"):
                     instance = gtfs_class(**record.to_dict())
                     schedule.session.add(instance)
             print
-        except sqlalchemy.orm.exc.UnmappedInstanceError as e:
+        except UnmappedInstanceError as e:
             if gtfs_class.gtfs_required:
                 raise Exception("Error: could not find %s" % gtfs_filename)
             elif no_calendar is True and gtfs_class == ServiceException:
