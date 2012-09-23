@@ -134,7 +134,7 @@ class Stop(Entity):
               Field('zone_id', String, cast=str),
               Field('stop_url', String, cast=str),
               Field('location_type', Integer, cast=int, default=0),
-              Field('parent_station', Integer, cast=int, default=0),
+              Field('parent_station', String, cast=str),
               Field('stop_timezone', String, cast=pytz.timezone),
               Field('wheelchair_boarding', Integer, cast=int, default=0),
              ]
@@ -153,9 +153,6 @@ class Stop(Entity):
         if self.location_type not in [0,1]:
             raise EntityBadFieldError('location_type %d not in {0,1} in %s' % \
                                       (self.location_type, repr(self)))
-        if self.parent_station not in [0,1]:
-            raise EntityBadFieldError('parent_station %d not in {0,1} in %s' % \
-                                      (self.parent_station, repr(self)))
         if self.wheelchair_boarding not in [0,1,2]:
             raise EntityBadFieldError('wheelchair_boarding %d not in {0,1,2} in %s' % \
                                       (self.wheelchair_boarding, repr(self)))

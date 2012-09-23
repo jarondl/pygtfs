@@ -3,6 +3,11 @@ from sqlalchemy.orm import mapper, relationship
 from unmapped_entities import *
 
 def table_def_from_entity(entity_class, metadata):
+    """Construct an SQLAlchemy Table from one of the subclasses of Entity in 
+    unmapped_entities. This is used by create_and_map_tables in a "classical"-
+    style SQLAlchemy mapping. 
+    """
+    
     columns = []
     for field in entity_class.fields:
         if field.foreign_key is not None:
@@ -16,6 +21,9 @@ def table_def_from_entity(entity_class, metadata):
     return Table(entity_class.table_name, metadata, *columns)
 
 def create_and_map_tables(metadata):
+    """For each of the subclasses of Entity in unmapped_entities, construct
+    the table and the mapping into metadata. 
+    """
     
     # create the tables
     agency_table = table_def_from_entity(Agency, metadata)
@@ -30,6 +38,7 @@ def create_and_map_tables(metadata):
     shapes_table = table_def_from_entity(ShapePoint, metadata)
     frequencies_table = table_def_from_entity(Frequency, metadata)
     transfers_table = table_def_from_entity(Transfer, metadata)
+    feed_info_table = table_def_from_entity(FeedInfo, metadata)
 
     # map the tables
     mapper(Agency, agency_table)
@@ -60,3 +69,4 @@ def create_and_map_tables(metadata):
                        'to_stop': relationship(Stop,
                                                primaryjoin=transfers_table.c.to_stop_id == stops_table.c.stop_id,
                                                backref="transfers_from")})
+    mapper(FeedInfo, feed_info_table)

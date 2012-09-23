@@ -3,64 +3,45 @@ from zipfile import ZipFile
 import os
 import csv
 
-class Record(object):
-    """A Record is a single row in a CSV file"""
-
-    def __init__(self, header, row):
-        self.header = header
-        self.row = row 
-
-    def to_dict(self):
-        return dict([(fieldname,self.row[fieldindex] if fieldindex<len(self.row) else None) for fieldname,fieldindex in self.header.items()])
-
-    def __repr__(self):
-        return repr(self.to_dict())
-
-    def __getitem__(self,name):
-        try:
-            return self.row[ self.header[name] ]
-        except KeyError:
-            return None
-
-class Table(object):
-    """A Table is a single CSV file"""
+class CSV(object):
+    """A CSV file."""
 
     def __init__(self, header, rows):
-
-        # header is a dict of name->index
-        self.header = dict( zip( header, range(len(header)) ) ) 
+        self.header = header
         self.rows = rows
 
     def __repr__(self):
-        return "<Table %s>"%self.header
+        return '<CSV %s>' % self.header
 
     def __iter__(self):
         return self
 
     def next(self):
-        return Record( self.header, self.rows.next() )
+        return dict(zip(self.header, self.rows.next()))
 
 class Feed(object):
-    """A Feed is a collection of CSV files with headers, either zipped into an archive
-         or loose in a folder"""
+    """A collection of CSV files with headers, either zipped into an archive
+    or loose in a folder."""
 
     def __init__(self, filename):
         self.filename = filename 
         self.zf = None
+        if not os.path.isdir(filename):
+            self.zf = ZipFile(filename)
+    
+    def __repr__(self):
+        return '<Feed %s>' % self.filename
 
-        if not os.path.isdir( filename ):
-            self.zf = ZipFile( filename )
-
-    def get_rows(self, filename):
+    def reader(self, filename, encoding='utf-8'):
         if self.zf:
             try:
-                contents = self.zf.read(filename)
-            except KeyError:
-                raise KeyError( "%s is not present feed"%filename )
-            return csv.reader( iterdecode( contents.split("\n"), "utf-8" ) )
+                file_handle = self.zf.read(filename).split('\n')
+            except IOError:
+                raise IOError('%s is not present in feed' % filename)
         else:
-            return csv.reader( iterdecode( open( os.path.join( self.filename, filename ) ), "utf-8" ) )
+            file_handle = open(os.path.join(self.filename, filename))
+        return csv.reader(iterdecode(file_handle, encoding))
 
-    def get_table(self, filename):
-        rows = self.get_rows( filename )
-        return Table( rows.next(), rows )
+    def read_table(self, filename):
+        rows = self.reader(filename)
+        return CSV(header=rows.next(), rows=rows)
