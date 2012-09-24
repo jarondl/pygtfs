@@ -5,7 +5,8 @@ from sqlalchemy.orm.exc import UnmappedInstanceError
 import feed
 import sys
 
-def load(feed_filename, db_filename=":memory:", commit_chunk=500):
+def load(feed_filename, db_filename=":memory:", strip_fields=True, 
+         commit_chunk=500):
     
     schedule = Schedule(db_filename) 
     schedule.create_tables(Entity.metadata)
@@ -34,7 +35,7 @@ def load(feed_filename, db_filename=":memory:", commit_chunk=500):
      
         try:
             gtfs_table = fd.read_table(gtfs_filename)
-        except UnmappedInstanceError as e:
+        except KeyError as e:
             if gtfs_class.gtfs_required:
                 raise IOError('Error: could not find %s' % gtfs_filename)
             elif no_calendar is True and gtfs_class == ServiceException:
@@ -51,6 +52,9 @@ def load(feed_filename, db_filename=":memory:", commit_chunk=500):
         
         for i, record in enumerate(gtfs_table):
             if len(record) > 0:
+                if strip_fields is True:
+                    for key in record:
+                        record[key] = record[key].strip()
                 instance = gtfs_class(**record)
                 schedule.session.add(instance)
                 if i % commit_chunk == 0 and i > 0:
@@ -60,4 +64,5 @@ def load(feed_filename, db_filename=":memory:", commit_chunk=500):
         print('%d records committed.' % (i+1))
         schedule.session.commit()
 
+    print('Complete.')
     return schedule

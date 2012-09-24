@@ -301,10 +301,10 @@ class StopTime(Entity):
         if self.stop_sequence < 0:
             raise EntityBadFieldError('stop_sequence %d cannot be negative in %s' % \
                                       (self.stop_sequence, repr(self)))
-        if self.pickup_type not in range(3):
+        if self.pickup_type not in [0,1,2,3]:
             raise EntityBadFieldError('pickup_type %d not in {0,1,2,3} in %s' % \
                                       (self.pickup_type, repr(self)))
-        if self.drop_off_type not in range(3):
+        if self.drop_off_type not in [0,1,2,3]:
               raise EntityBadFieldError('drop_off_type %d not in {0,1,2,3} in %s' % \
                                         (self.drop_off_type, repr(self)))
 
@@ -425,8 +425,8 @@ class Transfer(Entity):
 
     def __init__(self, **kwargs):
         Entity.__init__(self, **kwargs)
-        if self.transfer_type not in range(3):
-            raise EntityBadFieldError('exact_times %d not in {0,1} in %s' % \
+        if self.transfer_type not in [0,1,2,3]:
+            raise EntityBadFieldError('transfer_type %d not in {0,1,2,3} in %s' % \
                                       (self.transfer_type, repr(self)))
 
 class FeedInfo(Entity):
