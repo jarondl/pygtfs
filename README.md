@@ -64,14 +64,17 @@ The GTFS entity objects have attributes that correspond in name to the field def
 
 GTFS entities which cross-reference each other can also be obtained straightforwardly with attributes (again, see "Reference" below for full details):
 
-    >>> sched.routes[1].trips[0].stop_times[0].stop
-    <Stop PITT: Pittsburg/Bay Point>
+    >>> sched.trips_by_id['01SFO10'].service  # the service associated with trip 01SFO10
+    <Service WKDY (MTWThFSSu)>
 
 Reference
 ---------
 
+(to be populated with documentation when I'm not on an airplane that's about to land, sorry in the meantime look at `schedule.py` for the properties of Schedule and `entity/unmapped_entities.py` for the definitions of GTFS entity classes like Agency, Service, Stop, etc.)
+
 To-do
 -----
 
-- Add some more backrefs, including for optional fields; just generally go through GTFS and ensure that all cross-references are set up as desired
+- Complete documentation in reference section
+- Can I easily return a dictionary of backreferenced values rather than a list? (so for example sched.trips_by_id.stop_times_by_id)?
 - Improve testing; add some unit testing framework and test with a variety of GTFS data feeds. At this point I've only done some testing-by-hand with a few transit systems: MTA subway, MTA Manhattan buses, BART. 

@@ -65,7 +65,7 @@ def create_and_map_tables(metadata):
     mapper(Transfer, transfers_table, 
            properties={'from_stop': relationship(Stop, 
                                                  primaryjoin=transfers_table.c.from_stop_id == stops_table.c.stop_id,
-                                                 backref="transfers_away"),
+                                                 backref="transfers_to"),
                        'to_stop': relationship(Stop,
                                                primaryjoin=transfers_table.c.to_stop_id == stops_table.c.stop_id,
                                                backref="transfers_from")})
