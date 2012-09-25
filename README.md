@@ -15,8 +15,8 @@ License: MIT, included in `license.txt`. The original gtfs code did not include 
 Dependencies
 ------------
 
-- [SQLAlchemy](http://www.sqlalchemy.org/) - I used version 0.7.8. SQLAlchemy is used to map GTFS entities like Agency, Stop, Route, Service, etc. into a database. If you want to read the code it will help a lot to know SQLAlchemy (in fact this project was my introduction to it). 
-- [pytz](http://pytz.sourceforge.net/) - I used version 2012d. A few GTFS fields are expected to be in a [tz time zone format](http://en.wikipedia.org/wiki/List_of_tz_database_time_zones). 
+- [SQLAlchemy](http://www.sqlalchemy.org/) 0.7.8. Used for all mapping of GTFS objects to the relational DB. You'll need to be familiar with it to read the code; the [documentation](http://docs.sqlalchemy.org/) is pretty solid. 
+- [pytz](http://pytz.sourceforge.net/) 2012d. A few GTFS fields are expected to be in a [tz time zone format](http://en.wikipedia.org/wiki/List_of_tz_database_time_zones). 
 
 Installation
 ------------
@@ -67,14 +67,110 @@ GTFS entities which cross-reference each other can also be obtained straightforw
     >>> sched.trips_by_id['01SFO10'].service  # the service associated with trip 01SFO10
     <Service WKDY (MTWThFSSu)>
 
-Reference
----------
+gtfs2db
+-------
 
-(to be populated with documentation when I'm not on an airplane that's about to land, sorry in the meantime look at `schedule.py` for the properties of Schedule and `entity/unmapped_entities.py` for the definitions of GTFS entity classes like Agency, Service, Stop, etc.)
+`setup.py install` will also install a command-line script `gtfs2db` that takes a GTFS zip file or directory as an argument and will load the data into a database usable with gtfs-sql. Run `gtfs2db --help` for more. 
+
+Reference (dry, boring)
+-----------------------
+
+### Schedule
+
+A `Schedule` object represents all of the data contained in a GTFS feed. Schedule properties that return GTFS data in array form: 
+
+- schedule.agencies
+- schedule.stops
+- schedule.routes
+- schedule.services
+- schedule.service\_exceptions
+- schedule.trips
+- schedule.stop\_times
+- schedule.fares
+- schedule.fare\_rules
+- schedule.shape\_points
+- schedule.frequencies
+- schedule.transfers
+- schedule.feed\_info
+
+Schedule properties that return a dictionary of GTFS data keyed on their unique identifier: 
+
+- schedule.agencies\_by\_id
+- schedule.stops\_by\_id
+- schedule.routes\_by\_id
+- schedule.services\_by\_id
+- schedule.trips\_by\_id
+- schedule.fares\_by\_id
+- schedule.shape\_points\_by\_id
+
+### GTFS entities
+
+The following classes correspond to entities found in GTFS data. All the entities have attributes that correspond to data items in the [GTFS reference](https://developers.google.com/transit/gtfs/reference). For example, an `Agency` object has attributes `Agency.agency_id`, `Agency.agency_name`, etc. They will be returned in the appropriate type: integer, boolean, float, `pytz` timezone object, etc. `Service` and `ServiceException` correspond to the `calendar.txt` and `calendar_dates.txt` files, respectively. 
+
+- `Agency`
+- `Stop`
+- `Route`
+- `Service`
+- `ServiceException`
+- `Trip`
+- `StopTime`
+- `Fare`
+- `FareRule`
+- `ShapePoint`
+- `Frequency`
+- `Transfer`
+- `FeedInfo`
+
+In addition to the GTFS attributes, some additional attributes are available that return entities that are mapped to the entity in question via a relationship, either a single entity, a list, or a dictionary by unique id: 
+
+- `Agency.routes`
+- `Agency.routes_by_id`
+- `Stop.stop_times`
+- `Stop.transfers_to`
+- `Stop.transfers_from`
+- `Route.agency`
+- `Route.trips`
+- `Route.fare_rules`
+- `Service.service_exceptions`
+- `Service.trips`
+- `ServiceException.service`
+- `Trip.route`
+- `Trip.service`
+- `Trip.stop_times`
+- `Trip.frequencies`
+- `StopTime.stop`
+- `StopTime.trip`
+- `Fare.fare_rules`
+- `FareRule.fare`
+- `FareRule.route`
+- `Frequency.trip`
+- `Transfer.from_stop`
+- `Transfer.to_stop`
+
+All these classes inherit from the abstract `Entity` class and define the following attributes/methods: 
+
+- `Entity.table_name` - name of the table that stores this entity in the database, and, when appended with '.txt', the name of the GTFS file containing this information. 
+- `Entity.gtfs_required` - whether the GTFS file corresponding to this entity is required or not. Both `calendar.txt` and `calendar_dates.txt` are considered not required, although one of them must be present. 
+- `Entity.fields` - list of Fields, although not something you generally need to refer to; used to construct tables/mappings
+- `Entity.check_mandatory_fields()` - verifies whether all Fields flagged as mandatory are present (does not necessarily check their validity though, which is done in the constructors). Called in the base `Entity` constructor. 
+
+`Entity.metadata` (specifically that of the base class `Entity`) is the metadata used to control all of the SQLAlchemy mappings. 
+
+### Feed and loading
+
+`load(feed_filename, db_filename=":memory:", strip_fields=True, commit_chunk=500)`
+
+`load` loads the GTFS data at `feed_filename`, which can either be a zip file or a directory containing GTFS CSV files. `db_filename` is the name of the SQLite database to which gtfs-sql saves the data; the default name `:memory:` is an SQLAlchemy special word that corresponds to an in-memory database. 
+
+If `strip_fields` is true each entry will have leading/trailing blanks stripped. `commit_chunk` controls how many SQL transactions are added to each database session before being committed. 
+
+The `Feed` and `CSV` classes are used internally by `load`. 
+
+### Table generation and mapping
+
+The functions in `map_entities.py`, `table_def_from_entity()` and `create_and_map_tables()`, are run when gtfs-sql is imported, but are not needed otherwise. They construct tables and mappings based on the contents of `Entity.fields` plus a few extra parameters denoting relationships. I won't go into detail on them because they are not needed to use gtfs-sql.  
 
 To-do
 -----
 
-- Complete documentation in reference section
-- Can I easily return a dictionary of backreferenced values rather than a list? (so for example sched.trips_by_id.stop_times_by_id)?
 - Improve testing; add some unit testing framework and test with a variety of GTFS data feeds. At this point I've only done some testing-by-hand with a few transit systems: MTA subway, MTA Manhattan buses, BART. 

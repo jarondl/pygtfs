@@ -47,17 +47,18 @@ def create_and_map_tables(metadata):
            properties={'agency': relationship(Agency, backref='routes')})
     mapper(Service, calendar_table)
     mapper(ServiceException, calendar_dates_table, 
-           properties={'service': relationship(Service, backref='exceptions')})
+           properties={'service': relationship(Service, backref='service_exceptions')})
     mapper(Trip, trips_table, 
            properties={'route': relationship(Route, backref='trips'),
 					   'service': relationship(Service, backref='trips'),
-					   'stop_times': relationship(StopTime, order_by=stop_times_table.c.stop_sequence)})
+					   'stop_times': relationship(StopTime, 
+					                              order_by=stop_times_table.c.stop_sequence)})
     mapper(StopTime, stop_times_table, 
            properties={'trip': relationship(Trip),
                        'stop': relationship(Stop, backref='stop_times')})
     mapper(Fare, fare_attributes_table)
     mapper(FareRule, fare_rules_table, 
-           properties={'fare': relationship(Fare, backref='rules'),
+           properties={'fare': relationship(Fare, backref='fare_rules'),
                        'route': relationship(Route, backref='fare_rules')})
     mapper(ShapePoint, shapes_table)
     mapper(Frequency, frequencies_table, 
@@ -65,8 +66,10 @@ def create_and_map_tables(metadata):
     mapper(Transfer, transfers_table, 
            properties={'from_stop': relationship(Stop, 
                                                  primaryjoin=transfers_table.c.from_stop_id == stops_table.c.stop_id,
-                                                 backref="transfers_to"),
+                                                 backref='transfers_from',
+                                                 order_by=stops_table.c.stop_id),
                        'to_stop': relationship(Stop,
                                                primaryjoin=transfers_table.c.to_stop_id == stops_table.c.stop_id,
-                                               backref="transfers_from")})
+                                               backref='transfers_to',
+                                               order_by=stops_table.c.stop_id)})
     mapper(FeedInfo, feed_info_table)

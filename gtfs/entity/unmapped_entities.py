@@ -62,6 +62,9 @@ class Entity(object):
     """
     
     metadata = MetaData()
+    
+    table_name = None
+    gtfs_required = None
     fields = []
     
     def __init__(self, **kwargs):
@@ -85,16 +88,12 @@ class Entity(object):
                 raise EntityMissingFieldError('Missing field %s in %s' % \
                                               (field.name, self.__class__.__name__))
 
-def generate_table():
-    columns = []
-    for field in fields:
-        if f.foreign_key is not None:
-            column = Column(f.name, f.column_type, ForeignKey(f.foreign_key),
-                            primary_key=f.primary_key)
-        else:
-            column = Column(f.name, f.column_type, primary_key=f.primary_key)
-        columns.append(column)
-    return Table(self.table_name, Entity.metadata, *columns)
+# Subclasses of Entity are below; these represent the data in GTFS. 
+# The attributes of each class are mapped in by create_and_map tables in
+# map_entities.py:
+# 
+#  1. each Field in fields is mapped
+#  2. cross-references are mapped in with the properties parameter of mapper()
 
 class Agency(Entity):
     """A transit agency."""
@@ -118,7 +117,11 @@ class Agency(Entity):
     def __repr__(self):
         return '<Agency %s: %s>' % (getattr(self, 'agency_id', None), 
                                     self.agency_name)
-                                    
+    
+    @property
+    def routes_by_id(self):
+        return dict(zip([x.route_id for x in self.routes], self.routes))
+
 class Stop(Entity):
     """A physical stop, where passengers embark and disembark."""
     
@@ -190,8 +193,10 @@ class Route(Entity):
         if self.route_color < 0 or self.route_text_color > 16777215:
             raise EntityBadFieldError('route_text_color %s must be a hex between 000000 and FFFFFF in %s' % \
                                       (kwargs['route_text_color'], repr(self)))
-
-# Note: using calendar_dates.txt without calendar.txt is not yet supported
+    
+    @property
+    def trips_by_id(self):
+        return dict(zip([x.trip_id for x in self.trips], self.trips))
 
 class Service(Entity):
     """A calendar of service - indicates what days of week service is running."""
@@ -222,6 +227,10 @@ class Service(Entity):
         if self.sunday: dayofweek += 'Su'
         return '<Service %s (%s)>' % (self.service_id, dayofweek)
 
+    @property
+    def trips_by_id(self):
+        return dict(zip([x.trip_id for x in self.trips], self.trips))
+
 class ServiceException(Entity):
     """Single-day exceptions to the rules in Services."""
     
@@ -248,7 +257,7 @@ class Trip(Entity):
     
     table_name = 'trips'
     gtfs_required = True
-    
+
     fields = [Field('route_id', String, foreign_key='%s.route_id' % Route.table_name, 
                     cast=str, mandatory=True),
               Field('service_id', String, foreign_key='%s.service_id' % Service.table_name, 

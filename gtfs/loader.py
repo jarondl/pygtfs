@@ -61,7 +61,7 @@ def load(feed_filename, db_filename=":memory:", strip_fields=True,
                     schedule.session.commit()
                     sys.stdout.write('.')
                     sys.stdout.flush()
-        print('%d records committed.' % (i+1))
+        print('%d record%s committed.' % ((i+1), '' if i == 0 else 's'))
         schedule.session.commit()
 
     print('Complete.')
