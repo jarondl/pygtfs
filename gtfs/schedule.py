@@ -15,18 +15,34 @@ class Schedule:
     @property
     def agencies(self):
         return self.session.query(Agency).all()
+    
+    @property
+    def agencies_by_id(self):
+        return dict(zip([x.agency_id for x in self.agencies], self.agencies))
 
     @property
     def stops(self):
         return self.session.query(Stop).all()
+    
+    @property
+    def stops_by_id(self):
+        return dict(zip([x.stop_id for x in self.stops], self.stops))
 
     @property
     def routes(self):
         return self.session.query(Route).all()
+    
+    @property
+    def routes_by_id(self):
+        return dict(zip([x.route_id for x in self.routes], self.routes))
 
     @property
     def services(self):
         return self.session.query(Service).all()
+    
+    @property
+    def services_by_id(self):
+        return dict(zip([x.service_id for x in self.services], self.services))
 
     @property
     def service_exceptions(self):
@@ -35,6 +51,10 @@ class Schedule:
     @property
     def trips(self):
         return self.session.query(Trip).all()
+    
+    @property
+    def trips_by_id(self):
+        return dict(zip([x.trip_id for x in self.trips], self.trips))
 
     @property
     def stop_times(self):
@@ -43,6 +63,10 @@ class Schedule:
     @property
     def fares(self):
         return self.session.query(Fare).all()
+    
+    @property
+    def fares_by_id(self):
+        return dict(zip([x.fare_id for x in self.fares], self.fares))
             
     @property
     def fare_rules(self):
@@ -51,6 +75,10 @@ class Schedule:
     @property
     def shape_points(self):
         return self.session.query(ShapePoint).all()
+        
+    @property
+    def shape_points_by_id(self):
+        return dict(zip([x.shape_id for x in self.shape_points], self.shape_points))
                     
     @property
     def frequencies(self):

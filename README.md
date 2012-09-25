@@ -41,28 +41,37 @@ Once you've created the database you can access the data quickly without regener
 
     sched = gtfs.Schedule('data/bart.db')
 
-The Schedule object represents a collection of objects that correspond to the contents of a GTFS feed. You can get the list of agencies, stops, routes, etc. with some fairly straightforwardly named attributes (see `schedule.py` for the full list):
+The Schedule object represents a collection of objects that correspond to the contents of a GTFS feed. You can get the list of agencies, stops, routes, etc. with fairly straightforwardly named attributes (see "Reference" below for full details):
 
     >>> sched.agencies
     [<Agency BART: Bay Area Rapid Transit>, <Agency AirBART: AirBART>]
     >>> sched.routes
     [<Route AirBART: >, <Route 01: >, <Route 03: >, <Route 05: >, <Route 07: >, <Route 11: >]
 
-Once you've got the data in a variable, you can get objects corresponding to the GTFS data, which in turn have attributes that correspond in name to the field definitions in the [GTFS reference](https://developers.google.com/transit/gtfs/reference). 
+For GTFS entities that are identified by a dataset-unique identifier, you can also use the above attributes with `_by_id` appended to get a dictionary keyed on that identifier. So for example: 
 
-    >>> sched.stops[0]
-    <Stop 12TH: 12th St. Oakland City Center>
+    >>> sched.agencies_by_id
+    {u'AirBART': <Agency AirBART: AirBART>, u'BART': <Agency BART: Bay Area Rapid Transit>}
+    >>> sched.stops_by_id['SFIA']
+    <Stop SFIA: San Francisco Int'l Airport>
+
+The GTFS entity objects have attributes that correspond in name to the field definitions in the [GTFS reference](https://developers.google.com/transit/gtfs/reference). 
+
+    >>> sched.stops_by_id['SFIA'].stop_name
+    u"San Francisco Int'l Airport"
     >>> sched.routes[1].route_long_name
     u'Pittsburg/Bay Point - SFIA/Millbrae'
 
-Some of the attributes are also cross-referenced: 
+GTFS entities which cross-reference each other can also be obtained straightforwardly with attributes (again, see "Reference" below for full details):
 
     >>> sched.routes[1].trips[0].stop_times[0].stop
     <Stop PITT: Pittsburg/Bay Point>
 
+Reference
+---------
+
 To-do
 -----
 
-- For entities uniquely identified by an id, add decorators that return a dictionary mapping ids to objects. 
 - Add some more backrefs, including for optional fields; just generally go through GTFS and ensure that all cross-references are set up as desired
 - Improve testing; add some unit testing framework and test with a variety of GTFS data feeds. At this point I've only done some testing-by-hand with a few transit systems: MTA subway, MTA Manhattan buses, BART. 
