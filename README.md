@@ -4,7 +4,7 @@ gtfs-sql
 Overview
 --------
 
-Version: 0.1a
+Latest version: 0.1a1
 
 gtfs-sql is a library that reads and models information stored in Google's [General Transit Feed Specification (GTFS)](https://developers.google.com/transit/) format. GTFS is a format designed to specify information about a transit system, such as a city's subways or a private company's bus services. gtfs-sql stores information in an SQLite database using SQLAlchemy to facilitate the storage of Python objects in a relational database. 
 
@@ -21,7 +21,7 @@ Dependencies
 Installation
 ------------
 
-(still to-do)
+Clone the repo and use `python setup.py install`. At some point I may add this to PyPI, but I don't think it's mature enough. 
 
 Basic usage
 -----------
@@ -63,6 +63,6 @@ Some of the attributes are also cross-referenced:
 To-do
 -----
 
+- For entities uniquely identified by an id, add decorators that return a dictionary mapping ids to objects. 
 - Add some more backrefs, including for optional fields; just generally go through GTFS and ensure that all cross-references are set up as desired
 - Improve testing; add some unit testing framework and test with a variety of GTFS data feeds. At this point I've only done some testing-by-hand with a few transit systems: MTA subway, MTA Manhattan buses, BART. 
-- Double check setup.py, scripts/, and test/, which I haven't looked at yet

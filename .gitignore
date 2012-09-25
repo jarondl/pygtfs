@@ -2,5 +2,5 @@
 *.pyc
 build
 dist
-gtfs.egg-info
+gtfs-sql.egg-info
 data/*
