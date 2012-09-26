@@ -35,7 +35,7 @@ def load(feed_filename, db_filename=":memory:", strip_fields=True,
      
         try:
             gtfs_table = fd.read_table(gtfs_filename)
-        except KeyError as e:
+        except (KeyError, IOError) as e:
             if gtfs_class.gtfs_required:
                 raise IOError('Error: could not find %s' % gtfs_filename)
             elif no_calendar is True and gtfs_class == ServiceException:

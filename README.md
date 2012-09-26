@@ -21,7 +21,7 @@ Dependencies
 Installation
 ------------
 
-Clone the repo and use `python setup.py install`. At some point I may add this to PyPI, but I don't think it's mature enough. 
+Get [setuptools](http://pypi.python.org/pypi/setuptools) if you don't have it, clone the repo, and use `python setup.py install`. At some point I may add this to PyPI, but I don't think it's mature enough yet. 
 
 Basic usage
 -----------
@@ -37,7 +37,7 @@ You can load the data into an SQLite database on disk as well by passing a secon
 
     sched = gtfs.load('data/bart.zip', 'data/bart.db')
 
-Once you've created the database you can access the data quickly without regenerating the database by creating a Schedule object directly. 
+Once you've created the database you can access the data quickly without regenerating the database by creating a Schedule object directly as follows. Keep in mind that the SQL database will be much bigger on disk than a zip file (the order of magnitude varies a decent amount). 
 
     sched = gtfs.Schedule('data/bart.db')
 
@@ -72,8 +72,8 @@ gtfs2db
 
 `setup.py install` will also install a command-line script `gtfs2db` that takes a GTFS zip file or directory as an argument and will load the data into a database usable with gtfs-sql. Run `gtfs2db --help` for more. 
 
-Reference (dry, boring)
------------------------
+Reference
+---------
 
 ### Schedule
 
@@ -173,4 +173,4 @@ The functions in `map_entities.py`, `table_def_from_entity()` and `create_and_ma
 To-do
 -----
 
-- Improve testing; add some unit testing framework and test with a variety of GTFS data feeds. At this point I've only done some testing-by-hand with a few transit systems: MTA subway, MTA Manhattan buses, BART. 
+- Improve testing; add some unit testing framework and test with a variety of GTFS data feeds. 
