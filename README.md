@@ -79,29 +79,29 @@ Reference
 
 A `Schedule` object represents all of the data contained in a GTFS feed. Schedule properties that return GTFS data in array form: 
 
-- schedule.agencies
-- schedule.stops
-- schedule.routes
-- schedule.services
-- schedule.service\_exceptions
-- schedule.trips
-- schedule.stop\_times
-- schedule.fares
-- schedule.fare\_rules
-- schedule.shape\_points
-- schedule.frequencies
-- schedule.transfers
-- schedule.feed\_info
+- `schedule.agencies`
+- `schedule.stops`
+- `schedule.routes`
+- `schedule.services`
+- `schedule.service\_exceptions`
+- `schedule.trips`
+- `schedule.stop\_times`
+- `schedule.fares`
+- `schedule.fare\_rules`
+- `schedule.shape\_points`
+- `schedule.frequencies`
+- `schedule.transfers`
+- `schedule.feed\_info`
 
 Schedule properties that return a dictionary of GTFS data keyed on their unique identifier: 
 
-- schedule.agencies\_by\_id
-- schedule.stops\_by\_id
-- schedule.routes\_by\_id
-- schedule.services\_by\_id
-- schedule.trips\_by\_id
-- schedule.fares\_by\_id
-- schedule.shape\_points\_by\_id
+- `schedule.agencies\_by\_id`
+- `schedule.stops\_by\_id`
+- `schedule.routes\_by\_id`
+- `schedule.services\_by\_id`
+- `schedule.trips\_by\_id`
+- `schedule.fares\_by\_id`
+- `schedule.shape\_points\_by\_id`
 
 ### GTFS entities
 
