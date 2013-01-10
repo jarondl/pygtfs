@@ -32,6 +32,12 @@ class Feed(object):
     def __repr__(self):
         return '<Feed %s>' % self.filename
 
+    def unicode_csv_reader(self, file_handle, encoding='utf-8'):
+        reader = csv.reader([x.encode(encoding) for x in iterdecode(file_handle, encoding)])
+        for row in reader:
+            yield [unicode(x, encoding) for x in row]
+        return
+
     def reader(self, filename, encoding='utf-8'):
         if self.zf:
             try:
@@ -40,7 +46,7 @@ class Feed(object):
                 raise IOError('%s is not present in feed' % filename)
         else:
             file_handle = open(os.path.join(self.filename, filename))
-        return csv.reader(iterdecode(file_handle, encoding))
+        return self.unicode_csv_reader(file_handle, encoding)
 
     def read_table(self, filename):
         rows = self.reader(filename)
