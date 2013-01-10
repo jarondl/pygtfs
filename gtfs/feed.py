@@ -44,6 +44,8 @@ class Feed(object):
                 file_handle = self.zf.read(filename).split('\n')
             except IOError:
                 raise IOError('%s is not present in feed' % filename)
+            if file_handle[0].startswith('\xef\xbb\xbf'):
+                file_handle[0] = file_handle[0][3:]
         else:
             file_handle = open(os.path.join(self.filename, filename))
         return self.unicode_csv_reader(file_handle, encoding)
