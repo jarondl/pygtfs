@@ -1,5 +1,5 @@
 from sqlalchemy import Table, MetaData, Column, ForeignKey
-from sqlalchemy import String, Integer, Float, Boolean, Date, Interval, PickleType
+from sqlalchemy import String, Unicode, Integer, Float, Boolean, Date, Interval, PickleType
 import datetime
 import pytz
 import re
@@ -106,7 +106,7 @@ class Agency(Entity):
     # hope people aren't both omitting agency_ids and duping agency_names. 
     
     fields = [Field('agency_id', String, cast=str, primary_key=True, default=''), 
-              Field('agency_name', String, cast=str, mandatory=True, primary_key=True),
+              Field('agency_name', Unicode, cast=unicode, mandatory=True, primary_key=True),
               Field('agency_url', String, cast=str, mandatory=True),
               Field('agency_timezone', PickleType, cast=pytz.timezone, mandatory=True),
               Field('agency_lang', String, cast=str),
@@ -130,8 +130,8 @@ class Stop(Entity):
     
     fields = [Field('stop_id', String, cast=str, primary_key=True, mandatory=True),
               Field('stop_code', String, cast=str),
-              Field('stop_name', String, cast=str, mandatory=True),
-              Field('stop_desc', String, cast=str),
+              Field('stop_name', Unicode, cast=unicode, mandatory=True),
+              Field('stop_desc', Unicode, cast=unicode),
               Field('stop_lat', Float, cast=float, mandatory=True),
               Field('stop_lon', Float, cast=float, mandatory=True),
               Field('zone_id', String, cast=str),
@@ -170,9 +170,9 @@ class Route(Entity):
 
     fields = [Field('route_id', String, cast=str, primary_key=True, mandatory=True),
               Field('agency_id', String, foreign_key='%s.agency_id' % Agency.table_name, cast=str),
-              Field('route_short_name', String, cast=str, mandatory=True, default=''),
-              Field('route_long_name', String, cast=str, mandatory=True, default=''),
-              Field('route_desc', String, cast=str),
+              Field('route_short_name', Unicode, cast=unicode, mandatory=True, default=''),
+              Field('route_long_name', Unicode, cast=unicode, mandatory=True, default=''),
+              Field('route_desc', Unicode, cast=unicode),
               Field('route_type', Integer, cast=int, mandatory=True),
               Field('route_url', String, cast=str),
               Field('route_color', Integer, cast=int_hex, default=16777215),
@@ -263,8 +263,8 @@ class Trip(Entity):
               Field('service_id', String, foreign_key='%s.service_id' % Service.table_name, 
                     cast=str, mandatory=True),
               Field('trip_id', String, cast=str, primary_key=True, mandatory=True),
-              Field('trip_headsign', String, cast=str),
-              Field('trip_short_name', String, cast=str),
+              Field('trip_headsign', Unicode, cast=unicode),
+              Field('trip_short_name', Unicode, cast=unicode),
               Field('direction_id', Integer, cast=int),
               Field('block_id', String, cast=str),
               Field('shape_id', String, cast=str),
@@ -293,7 +293,7 @@ class StopTime(Entity):
               Field('stop_id', String, foreign_key='%s.stop_id' % Stop.table_name, 
                     cast=str, primary_key=True, mandatory=True),
               Field('stop_sequence', Integer, cast=int, primary_key=True, mandatory=True),
-              Field('stop_headsign', String, cast=str),
+              Field('stop_headsign', Unicode, cast=unicode),
               Field('pickup_type', Integer, cast=int, default=0),
               Field('drop_off_type', Integer, cast=int, default=0),
               Field('shape_dist_traveled', Float, cast=float),
@@ -444,7 +444,7 @@ class FeedInfo(Entity):
     table_name = 'feed_info'
     gtfs_required = False
     
-    fields = [Field('feed_publisher_name', String, cast=str, primary_key=True, mandatory=True),
+    fields = [Field('feed_publisher_name', Unicode, cast=unicode, primary_key=True, mandatory=True),
               Field('feed_publisher_url', String, cast=str, mandatory=True),
               Field('feed_lang', String, cast=str, mandatory=True),
               Field('feed_start_date', Date, cast=date_yyyymmdd),
