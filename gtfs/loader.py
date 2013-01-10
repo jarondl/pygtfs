@@ -56,7 +56,7 @@ def load(feed_filename, db_filename=":memory:", strip_fields=True,
                     for key in record:
                         record[key] = record[key].strip()
                 instance = gtfs_class(**record)
-                schedule.session.add(instance)
+                schedule.session.merge(instance)
                 if i % commit_chunk == 0 and i > 0:
                     schedule.session.commit()
                     sys.stdout.write('.')
