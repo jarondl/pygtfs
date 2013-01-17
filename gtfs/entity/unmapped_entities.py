@@ -205,13 +205,13 @@ class Service(Entity):
     gtfs_required = False   # if this is absent you must have a calendar_dates file
     
     fields = [Field('service_id', String, cast=str, primary_key=True, mandatory=True),
-              Field('monday', Boolean, cast=bool, mandatory=True),
-              Field('tuesday', Boolean, cast=bool, mandatory=True),
-              Field('wednesday', Boolean, cast=bool, mandatory=True),
-              Field('thursday', Boolean, cast=bool, mandatory=True),
-              Field('friday', Boolean, cast=bool, mandatory=True),
-              Field('saturday', Boolean, cast=bool, mandatory=True),
-              Field('sunday', Boolean, cast=bool, mandatory=True),
+              Field('monday', Boolean, cast=int, mandatory=True),
+              Field('tuesday', Boolean, cast=int, mandatory=True),
+              Field('wednesday', Boolean, cast=int, mandatory=True),
+              Field('thursday', Boolean, cast=int, mandatory=True),
+              Field('friday', Boolean, cast=int, mandatory=True),
+              Field('saturday', Boolean, cast=int, mandatory=True),
+              Field('sunday', Boolean, cast=int, mandatory=True),
               Field('start_date', Date, cast=date_yyyymmdd, mandatory=True),
               Field('end_date', Date, cast=date_yyyymmdd, mandatory=True),
              ]
