@@ -5,10 +5,11 @@ from sqlalchemy.orm.exc import UnmappedInstanceError
 import feed
 import sys
 
-def load(feed_filename, db_filename=":memory:", strip_fields=True, 
-         commit_chunk=500):
-    
-    schedule = Schedule(db_filename) 
+def load(feed_filename, db_connection=":memory:", strip_fields=True,
+         commit_chunk=500, **kwargs):
+    if 'db_filename' in kwargs:
+        db_connection = kwargs['db_filename']
+    schedule = Schedule(db_connection)
     schedule.create_tables(Entity.metadata)
     fd = feed.Feed(feed_filename)
     

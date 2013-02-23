@@ -158,9 +158,9 @@ All these classes inherit from the abstract `Entity` class and define the follow
 
 ### Feed and loading
 
-`load(feed_filename, db_filename=":memory:", strip_fields=True, commit_chunk=500)`
+`load(feed_filename, db_connection=":memory:", strip_fields=True, commit_chunk=500)`
 
-`load` loads the GTFS data at `feed_filename`, which can either be a zip file or a directory containing GTFS CSV files. `db_filename` is the name of the SQLite database to which gtfs-sql saves the data; the default name `:memory:` is an SQLAlchemy special word that corresponds to an in-memory database. 
+`load` loads the GTFS data at `feed_filename`, which can either be a zip file or a directory containing GTFS CSV files. `db_connection` can be used to tell gtfs-sql to persist the data to disk, rather than storing it temporarily in memory. It can be either a full database uri e.g. "postgresql://postgres@localhost:5432/gtfs" or a filename for SQLite. The default name `:memory:` is a SQLAlchemy special word that corresponds to an in-memory database. 
 
 If `strip_fields` is true each entry will have leading/trailing blanks stripped. `commit_chunk` controls how many SQL transactions are added to each database session before being committed. 
 
