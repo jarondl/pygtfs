@@ -40,7 +40,9 @@ class Feed(object):
         return '<Feed %s>' % self.filename
 
     def unicode_csv_reader(self, file_handle, encoding='utf-8'):
-        reader = csv.reader([x.encode(encoding) for x in iterdecode(file_handle, encoding)])
+        if encoding == 'utf-8':
+            encoding_sig = 'utf-8-sig'
+        reader = csv.reader([x.encode(encoding) for x in iterdecode(file_handle, encoding_sig)])
         for row in reader:
             yield [unicode(x, encoding) for x in row]
         return
@@ -51,8 +53,6 @@ class Feed(object):
                 file_handle = self.zf.read(filename).split('\n')
             except IOError:
                 raise IOError('%s is not present in feed' % filename)
-            if file_handle[0].startswith('\xef\xbb\xbf'):
-                file_handle[0] = file_handle[0][3:]
         else:
             file_handle = open(os.path.join(self.filename, filename))
         return self.unicode_csv_reader(file_handle, encoding)
