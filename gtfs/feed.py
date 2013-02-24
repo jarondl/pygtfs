@@ -9,6 +9,7 @@ class CSV(object):
     def __init__(self, header, rows):
         self.header = header
         self.rows = rows
+        self.peek_queue = []
 
     def __repr__(self):
         return '<CSV %s>' % self.header
@@ -17,7 +18,13 @@ class CSV(object):
         return self
 
     def next(self):
+        if self.peek_queue:
+            return self.peek_queue.pop(0)
         return dict(zip(self.header, self.rows.next()))
+
+    def peek(self):
+        self.peek_queue.append(dict(zip(self.header, self.rows.next())))
+        return self.peek_queue[-1]
 
 class Feed(object):
     """A collection of CSV files with headers, either zipped into an archive

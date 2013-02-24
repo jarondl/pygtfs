@@ -5,15 +5,19 @@ from sqlalchemy.orm.exc import UnmappedInstanceError
 import feed
 import sys
 
+def drop_then_load(*args, **kwargs):
+    kwargs['drop_agency'] = True
+    load(*args, **kwargs)
+
 def load(feed_filename, db_connection=":memory:", strip_fields=True,
-         commit_chunk=500, **kwargs):
+         commit_chunk=500, drop_agency=False, **kwargs):
     if 'db_filename' in kwargs:
         db_connection = kwargs['db_filename']
     schedule = Schedule(db_connection)
     schedule.create_tables(Entity.metadata)
     fd = feed.Feed(feed_filename)
     
-    gtfs_classes = (Agency,
+    gtfs_classes = [Agency,
                     Stop,
                     Route,
                     Service,
@@ -26,17 +30,16 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
                     Frequency,
                     Transfer,
                     FeedInfo,
-                    )
+                    ]
+    gtfs_tables = {}
 
     no_calendar = False
-    agency_id = None
     for gtfs_class in gtfs_classes:
-
         print('Loading GTFS data for %s:' % gtfs_class)
         gtfs_filename = gtfs_class.table_name + '.txt'
      
         try:
-            gtfs_table = fd.read_table(gtfs_filename)
+            gtfs_tables[gtfs_class] = fd.read_table(gtfs_filename)
         except (KeyError, IOError) as e:
             if gtfs_class.gtfs_required:
                 raise IOError('Error: could not find %s' % gtfs_filename)
@@ -51,7 +54,24 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
                 print('File %s not present but not mandatory, continuing.' % \
                       gtfs_filename)
                 continue
-        
+
+    # peek at the Agency table
+    record = gtfs_tables[Agency].peek()
+    if 'agency_id' not in record or not record['agency_id'].strip():
+        agency_id = record['agency_name'].lower().strip()
+    else:
+        agency_id = record['agency_id'].strip()
+
+    if drop_agency:
+        # reversed so we don't trip-up on foreign key constraints
+        for gtfs_class in reversed(gtfs_classes):
+            schedule.session.query(gtfs_class).\
+                filter(gtfs_class.agency_id==agency_id).\
+                delete()
+    for gtfs_class in gtfs_classes:
+        if gtfs_class not in gtfs_tables:
+            continue
+        gtfs_table = gtfs_tables[gtfs_class]
         for i, record in enumerate(gtfs_table):
             if len(record) > 0:
                 if strip_fields is True:
@@ -59,22 +79,20 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
                     for key in record:
                         record_stripped[key.strip()] = record[key].strip()
                     record = record_stripped
-                if gtfs_class is Agency:
-                    if 'agency_id' not in record or \
-                            not record['agency_id'].strip():
-                        record['agency_id'] = record['agency_name'].lower()
-                    if agency_id is not None and record['agency_id'] != agency_id:
-                        raise Exception('Loading multiple agencies at the same time not supported')
-                    agency_id = record['agency_id']
+                if getattr(record, 'agency_id', agency_id).strip() != agency_id:
+                    raise Exception('Loading multiple agencies from the same feed is not supported')
                 record['agency_id'] = agency_id
                 instance = gtfs_class(**record)
-                schedule.session.merge(instance)
+                schedule.session.add(instance)
                 if i % commit_chunk == 0 and i > 0:
-                    schedule.session.commit()
+                    if not drop_agency:
+                        schedule.session.commit()
                     sys.stdout.write('.')
                     sys.stdout.flush()
         print('%d record%s committed.' % ((i+1), '' if i == 0 else 's'))
-        schedule.session.commit()
+        if not drop_agency:
+            schedule.session.commit()
+    schedule.session.commit()
 
     print('Complete.')
     return schedule
