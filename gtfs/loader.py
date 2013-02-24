@@ -54,8 +54,10 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
         for i, record in enumerate(gtfs_table):
             if len(record) > 0:
                 if strip_fields is True:
+                    record_stripped = {}
                     for key in record:
-                        record[key] = record[key].strip()
+                        record_stripped[key.strip()] = record[key].strip()
+                    record = record_stripped
                 if gtfs_class is Agency:
                     if 'agency_id' not in record or \
                             not record['agency_id'].strip():
