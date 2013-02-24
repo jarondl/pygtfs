@@ -56,6 +56,10 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
                 if strip_fields is True:
                     for key in record:
                         record[key] = record[key].strip()
+                if gtfs_class is Agency:
+                    if 'agency_id' not in record or \
+                            not record['agency_id'].strip():
+                        record['agency_id'] = record['agency_name'].lower()
                 instance = gtfs_class(**record)
                 schedule.session.merge(instance)
                 if i % commit_chunk == 0 and i > 0:

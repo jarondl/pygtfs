@@ -105,8 +105,8 @@ class Agency(Entity):
     # that agency_id and agency_name together are enough for a primary key - 
     # hope people aren't both omitting agency_ids and duping agency_names. 
     
-    fields = [Field('agency_id', String, cast=str, primary_key=True, default=''), 
-              Field('agency_name', Unicode, cast=unicode, mandatory=True, primary_key=True),
+    fields = [Field('agency_id', String, cast=str, primary_key=True),
+              Field('agency_name', Unicode, cast=unicode, mandatory=True),
               Field('agency_url', String, cast=str, mandatory=True),
               Field('agency_timezone', PickleType, cast=pytz.timezone, mandatory=True),
               Field('agency_lang', String, cast=str),
