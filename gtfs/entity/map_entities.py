@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Table
 from sqlalchemy.orm import mapper, relationship
+from sqlalchemy.sql.expression import and_
 from unmapped_entities import *
 
 def table_def_from_entity(entity_class, metadata):
@@ -18,6 +19,8 @@ def table_def_from_entity(entity_class, metadata):
         else:
             columns.append(Column(field.name, field.column_type,
                                   primary_key=field.primary_key))
+    for constraint in getattr(entity_class, 'foreign_key_constraints', []):
+        columns.append(constraint)
     return Table(entity_class.table_name, metadata, *columns)
 
 def create_and_map_tables(metadata):
@@ -65,11 +68,11 @@ def create_and_map_tables(metadata):
            properties={'trip': relationship(Trip, backref='frequencies')})
     mapper(Transfer, transfers_table, 
            properties={'from_stop': relationship(Stop, 
-                                                 primaryjoin=transfers_table.c.from_stop_id == stops_table.c.stop_id,
+                                                 primaryjoin=and_(transfers_table.c.from_stop_id == stops_table.c.stop_id, transfers_table.c.from_stop_id == stops_table.c.stop_id),
                                                  backref='transfers_from',
                                                  order_by=stops_table.c.stop_id),
                        'to_stop': relationship(Stop,
-                                               primaryjoin=transfers_table.c.to_stop_id == stops_table.c.stop_id,
+                                               primaryjoin=and_(transfers_table.c.to_stop_id == stops_table.c.stop_id, transfers_table.c.from_stop_id == stops_table.c.stop_id),
                                                backref='transfers_to',
                                                order_by=stops_table.c.stop_id)})
     mapper(FeedInfo, feed_info_table)

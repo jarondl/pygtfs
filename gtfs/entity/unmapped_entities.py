@@ -1,4 +1,4 @@
-from sqlalchemy import Table, MetaData, Column, ForeignKey
+from sqlalchemy import Table, MetaData, Column, ForeignKey, ForeignKeyConstraint
 from sqlalchemy import String, Unicode, Integer, Float, Boolean, Date, Interval, PickleType
 import datetime
 import pytz
@@ -128,7 +128,8 @@ class Stop(Entity):
     table_name = 'stops'
     gtfs_required = True
     
-    fields = [Field('stop_id', String, cast=str, primary_key=True, mandatory=True),
+    fields = [Field('agency_id', String, cast=str, primary_key=True),
+              Field('stop_id', String, cast=str, primary_key=True, mandatory=True),
               Field('stop_code', String, cast=str),
               Field('stop_name', Unicode, cast=unicode, mandatory=True),
               Field('stop_desc', Unicode, cast=unicode),
@@ -168,8 +169,8 @@ class Route(Entity):
     table_name = 'routes'
     gtfs_required = True
 
-    fields = [Field('route_id', String, cast=str, primary_key=True, mandatory=True),
-              Field('agency_id', String, foreign_key='%s.agency_id' % Agency.table_name, cast=str),
+    fields = [Field('agency_id', String, foreign_key='%s.agency_id' % Agency.table_name, cast=str, primary_key=True),
+              Field('route_id', String, cast=str, primary_key=True, mandatory=True),
               Field('route_short_name', Unicode, cast=unicode, mandatory=True, default=''),
               Field('route_long_name', Unicode, cast=unicode, mandatory=True, default=''),
               Field('route_desc', Unicode, cast=unicode),
@@ -207,7 +208,8 @@ class Service(Entity):
     table_name = 'calendar'
     gtfs_required = False   # if this is absent you must have a calendar_dates file
     
-    fields = [Field('service_id', String, cast=str, primary_key=True, mandatory=True),
+    fields = [Field('agency_id', String, cast=str, primary_key=True),
+              Field('service_id', String, cast=str, primary_key=True, mandatory=True),
               Field('monday', Boolean, cast=bool_int, mandatory=True),
               Field('tuesday', Boolean, cast=bool_int, mandatory=True),
               Field('wednesday', Boolean, cast=bool_int, mandatory=True),
@@ -240,11 +242,12 @@ class ServiceException(Entity):
     table_name = 'calendar_dates'
     gtfs_required = False
     
-    fields = [Field('service_id', String, foreign_key='%s.service_id' % Service.table_name, 
-                    cast=str, primary_key=True, mandatory=True),
+    fields = [Field('agency_id', String, cast=str, primary_key=True),
+              Field('service_id', String, cast=str, primary_key=True, mandatory=True),
               Field('date', Date, cast=date_yyyymmdd, primary_key=True, mandatory=True),
               Field('exception_type', Integer, cast=int, mandatory=True),
              ]
+    foreign_key_constraints = [ForeignKeyConstraint(['agency_id', 'service_id'], ['%s.agency_id' % Service.table_name, '%s.service_id' % Service.table_name])]
 
     def __repr__(self):
         return '<ServiceException %s: %s>' % (self.service_id, self.date)
@@ -261,10 +264,9 @@ class Trip(Entity):
     table_name = 'trips'
     gtfs_required = True
 
-    fields = [Field('route_id', String, foreign_key='%s.route_id' % Route.table_name, 
-                    cast=str, mandatory=True),
-              Field('service_id', String, foreign_key='%s.service_id' % Service.table_name, 
-                    cast=str, mandatory=True),
+    fields = [Field('agency_id', String, cast=str, primary_key=True),
+              Field('route_id', String, cast=str, mandatory=True),
+              Field('service_id', String, cast=str, mandatory=True),
               Field('trip_id', String, cast=str, primary_key=True, mandatory=True),
               Field('trip_headsign', Unicode, cast=unicode),
               Field('trip_short_name', Unicode, cast=unicode),
@@ -272,6 +274,8 @@ class Trip(Entity):
               Field('block_id', String, cast=str),
               Field('shape_id', String, cast=str),
              ]
+    foreign_key_constraints = [ForeignKeyConstraint(['agency_id', 'route_id'], ['%s.agency_id' % Route.table_name, '%s.route_id' % Route.table_name]),
+                               ForeignKeyConstraint(['agency_id', 'service_id'], ['%s.agency_id' % Service.table_name, '%s.service_id' % Service.table_name])]
 
     def __repr__(self):
         return '<Trip %s>' % self.trip_id
@@ -289,18 +293,19 @@ class StopTime(Entity):
     table_name = 'stop_times'
     gtfs_required = True
     
-    fields = [Field('trip_id', String, foreign_key='%s.trip_id' % Trip.table_name,
-                    cast=str, primary_key=True, mandatory=True),
+    fields = [Field('agency_id', String, cast=str, primary_key=True),
+              Field('trip_id', String, cast=str, primary_key=True, mandatory=True),
               Field('arrival_time', Interval, cast=timedelta_hms, mandatory=True),
               Field('departure_time', Interval, cast=timedelta_hms, mandatory=True),
-              Field('stop_id', String, foreign_key='%s.stop_id' % Stop.table_name, 
-                    cast=str, primary_key=True, mandatory=True),
+              Field('stop_id', String, cast=str, primary_key=True, mandatory=True),
               Field('stop_sequence', Integer, cast=int, primary_key=True, mandatory=True),
               Field('stop_headsign', Unicode, cast=unicode),
               Field('pickup_type', Integer, cast=int, default=0),
               Field('drop_off_type', Integer, cast=int, default=0),
               Field('shape_dist_traveled', Float, cast=float),
              ]
+    foreign_key_constraints = [ForeignKeyConstraint(['agency_id', 'trip_id'], ['%s.agency_id' % Trip.table_name, '%s.trip_id' % Trip.table_name]),
+                               ForeignKeyConstraint(['agency_id', 'stop_id'], ['%s.agency_id' % Stop.table_name, '%s.stop_id' % Stop.table_name])]
 
     def __repr__(self):
         return '<StopTime %s: %d>' % (self.trip_id, self.stop_sequence)
@@ -326,7 +331,8 @@ class Fare(Entity):
     table_name = 'fare_attributes'
     gtfs_required = False
     
-    fields = [Field('fare_id', String, cast=str, primary_key=True, mandatory=True),
+    fields = [Field('agency_id', String, cast=str, primary_key=True),
+              Field('fare_id', String, cast=str, primary_key=True, mandatory=True),
               Field('price', Float, cast=float, mandatory=True),
               Field('currency_type', String, cast=str, mandatory=True),
               Field('payment_method', Integer, cast=int, mandatory=True),
@@ -349,15 +355,16 @@ class FareRule(Entity):
     table_name = 'fare_rules'
     gtfs_required = False
     
-    fields = [Field('fare_id', String, foreign_key='%s.fare_id' % Fare.table_name, 
-                    cast=str, primary_key=True, mandatory=True),
-              Field('route_id', String, foreign_key='%s.route_id' % Route.table_name,
-                    cast=str, primary_key=True, default=''),
+    fields = [Field('agency_id', String, cast=str, primary_key=True),
+              Field('fare_id', String, cast=str, primary_key=True, mandatory=True),
+              Field('route_id', String, cast=str, primary_key=True, default=''),
               Field('origin_id', String, cast=str, primary_key=True, default=''),
               Field('destination_id', String, cast=str, primary_key=True, default=''),
               Field('contains_id', String, cast=str, primary_key=True, default=''),
              ]
-    
+    foreign_key_constraints = [ForeignKeyConstraint(['agency_id', 'fare_id'], ['%s.agency_id' % Fare.table_name, '%s.fare_id' % Fare.table_name]),
+                               ForeignKeyConstraint(['agency_id', 'route_id'], ['%s.agency_id' % Route.table_name, '%s.route_id' % Route.table_name])]
+
     def __repr__(self):
         return '<FareRule %s: %s %s %s %s>' % (self.fare_id, 
                                                self.route_id,
@@ -371,7 +378,8 @@ class ShapePoint(Entity):
     table_name = 'shapes'
     gtfs_required = False
     
-    fields = [Field('shape_id', String, cast=str, primary_key=True, mandatory=True),
+    fields = [Field('agency_id', String, cast=str, primary_key=True),
+              Field('shape_id', String, cast=str, primary_key=True, mandatory=True),
               Field('shape_pt_lat', Float, cast=float, primary_key=True, mandatory=True),
               Field('shape_pt_lon', Float, cast=float, primary_key=True, mandatory=True),
               Field('shape_pt_sequence', Integer, cast=int, primary_key=True, mandatory=True),
@@ -399,8 +407,8 @@ class Frequency(Entity):
     table_name = 'frequencies'
     gtfs_required = False
     
-    fields = [Field('trip_id', String, foreign_key='%s.trip_id' % Trip.table_name, 
-                    cast=str, primary_key=True, mandatory=True),
+    fields = [Field('agency_id', String, cast=str, primary_key=True),
+              Field('trip_id', String, cast=str, primary_key=True, mandatory=True),
               Field('start_time', Interval, cast=timedelta_hms, 
                     primary_key=True, mandatory=True),
               Field('end_time', Interval, cast=timedelta_hms, 
@@ -408,6 +416,7 @@ class Frequency(Entity):
               Field('headway_secs', Integer, cast=int, mandatory=True),
               Field('exact_times', Integer, cast=int, default=0)
              ]
+    foreign_key_constraints = [ForeignKeyConstraint(['agency_id', 'trip_id'], ['%s.agency_id' % Trip.table_name, '%s.trip_id' % Trip.table_name])]
 
     def __repr__(self):
         return '<Frequency %s %s-%s>' % (self.trip_id, self.start_time, self.end_time)
@@ -424,13 +433,16 @@ class Transfer(Entity):
     table_name = 'transfers'
     gtfs_required = False
     
-    fields = [Field('from_stop_id', String, foreign_key='%s.stop_id' % Stop.table_name, 
+    fields = [Field('agency_id', String, cast=str, primary_key=True),
+              Field('from_stop_id', String,
                     cast=str, primary_key=True, mandatory=True),
-              Field('to_stop_id', String, foreign_key='%s.stop_id' % Stop.table_name,
+              Field('to_stop_id', String,
                     cast=str, primary_key=True, mandatory=True),
               Field('transfer_type', Integer, cast=int, mandatory=True, default=0),
               Field('min_transfer_time', String, cast=str),
              ]
+    foreign_key_constraints = [ForeignKeyConstraint(['agency_id', 'from_stop_id'], ['%s.agency_id' % Stop.table_name, '%s.stop_id' % Stop.table_name]),
+                               ForeignKeyConstraint(['agency_id', 'to_stop_id'], ['%s.agency_id' % Stop.table_name, '%s.stop_id' % Stop.table_name])]
 
     def __repr__(self):
         return "<Transfer %s-%s>" % (self.from_stop_id, self.to_stop_id)
@@ -447,7 +459,8 @@ class FeedInfo(Entity):
     table_name = 'feed_info'
     gtfs_required = False
     
-    fields = [Field('feed_publisher_name', Unicode, cast=unicode, primary_key=True, mandatory=True),
+    fields = [Field('agency_id', String, foreign_key='%s.agency_id' % Agency.table_name, cast=str, primary_key=True),
+              Field('feed_publisher_name', Unicode, cast=unicode, primary_key=True, mandatory=True),
               Field('feed_publisher_url', String, cast=str, mandatory=True),
               Field('feed_lang', String, cast=str, mandatory=True),
               Field('feed_start_date', Date, cast=date_yyyymmdd),

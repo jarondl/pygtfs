@@ -29,6 +29,7 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
                     )
 
     no_calendar = False
+    agency_id = None
     for gtfs_class in gtfs_classes:
 
         print('Loading GTFS data for %s:' % gtfs_class)
@@ -62,6 +63,10 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
                     if 'agency_id' not in record or \
                             not record['agency_id'].strip():
                         record['agency_id'] = record['agency_name'].lower()
+                    if agency_id is not None and record['agency_id'] != agency_id:
+                        raise Exception('Loading multiple agencies at the same time not supported')
+                    agency_id = record['agency_id']
+                record['agency_id'] = agency_id
                 instance = gtfs_class(**record)
                 schedule.session.merge(instance)
                 if i % commit_chunk == 0 and i > 0:
