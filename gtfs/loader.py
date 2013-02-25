@@ -10,7 +10,7 @@ def drop_then_load(*args, **kwargs):
     load(*args, **kwargs)
 
 def load(feed_filename, db_connection=":memory:", strip_fields=True,
-         commit_chunk=500, drop_agency=False, **kwargs):
+         commit_chunk=500, drop_agency=False, agency_id_override=None, **kwargs):
     if 'db_filename' in kwargs:
         db_connection = kwargs['db_filename']
     schedule = Schedule(db_connection)
@@ -58,9 +58,10 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
     # peek at the Agency table
     record = gtfs_tables[Agency].peek()
     if 'agency_id' not in record or not record['agency_id'].strip():
-        agency_id = record['agency_name'].lower().strip()
+        feed_agency_id = record['agency_name'].lower().strip()
     else:
-        agency_id = record['agency_id'].strip()
+        feed_agency_id = record['agency_id'].strip()
+    agency_id = agency_id_override or feed_agency_id
 
     if drop_agency:
         # reversed so we don't trip-up on foreign key constraints
@@ -79,7 +80,7 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
                     for key in record:
                         record_stripped[key.strip()] = record[key].strip()
                     record = record_stripped
-                if getattr(record, 'agency_id', agency_id).strip() != agency_id:
+                if getattr(record, 'agency_id', feed_agency_id).strip() != feed_agency_id:
                     raise Exception('Loading multiple agencies from the same feed is not supported')
                 record['agency_id'] = agency_id
                 instance = gtfs_class(**record)
