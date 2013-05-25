@@ -1,4 +1,5 @@
 from codecs import iterdecode
+from collections import namedtuple
 from zipfile import ZipFile
 import os
 import csv
@@ -6,8 +7,9 @@ import csv
 class CSV(object):
     """A CSV file."""
 
-    def __init__(self, header, rows):
+    def __init__(self, header, rows, feedtype='CSVTuple'):
         self.header = header
+        self.Tuple = namedtuple(feedtype, header)
         self.rows = rows
         self.peek_queue = []
 
@@ -17,13 +19,16 @@ class CSV(object):
     def __iter__(self):
         return self
 
+    def _next(self):
+        return self.Tuple._make(self.rows.next())
+
     def next(self):
         if self.peek_queue:
             return self.peek_queue.pop(0)
-        return dict(zip(self.header, self.rows.next()))
+        return self._next()
 
     def peek(self):
-        self.peek_queue.append(dict(zip(self.header, self.rows.next())))
+        self.peek_queue.append(self._next())
         return self.peek_queue[-1]
 
 class Feed(object):
@@ -59,4 +64,5 @@ class Feed(object):
 
     def read_table(self, filename):
         rows = self.reader(filename)
-        return CSV(header=rows.next(), rows=rows)
+        feedtype = filename.rsplit('/')[-1].rsplit('.')[0].title().replace('_', '')
+        return CSV(feedtype=feedtype, header=rows.next(), rows=rows)
