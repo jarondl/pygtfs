@@ -107,7 +107,7 @@ class Agency(Entity):
     
     fields = [
               Field('feed_name', String, cast=str, primary_key=True),
-              Field('agency_id', String, cast=str, primary_key=True),
+              Field('agency_id', String, cast=str, primary_key=True, default="None"),
               Field('agency_name', Unicode, cast=unicode, mandatory=True),
               Field('agency_url', String, cast=str, mandatory=True),
               Field('agency_timezone', PickleType, cast=pytz.timezone, mandatory=True),
