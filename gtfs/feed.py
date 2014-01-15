@@ -4,6 +4,9 @@ from zipfile import ZipFile
 import os
 import csv
 
+def _row_stripper(row):
+    return (cell.strip() for cell in row)
+
 class CSV(object):
     """A CSV file."""
 
@@ -35,9 +38,10 @@ class Feed(object):
     """A collection of CSV files with headers, either zipped into an archive
     or loose in a folder."""
 
-    def __init__(self, filename):
+    def __init__(self, filename, strip_fields=True):
         self.filename = filename 
         self.zf = None
+        self.strip_fields = strip_fields
         if not os.path.isdir(filename):
             self.zf = ZipFile(filename)
     
@@ -63,6 +67,9 @@ class Feed(object):
         return self.unicode_csv_reader(file_handle, encoding)
 
     def read_table(self, filename):
-        rows = self.reader(filename)
+        if self.strip_fields:
+            rows = (_row_stripper(row) for row in self.reader(filename))
+        else:
+            rows = self.reader(filename)
         feedtype = filename.rsplit('/')[-1].rsplit('.')[0].title().replace('_', '')
         return CSV(feedtype=feedtype, header=rows.next(), rows=rows)

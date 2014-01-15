@@ -15,7 +15,7 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
         db_connection = kwargs['db_filename']
     schedule = Schedule(db_connection)
     schedule.create_tables(Entity.metadata)
-    fd = feed.Feed(feed_filename)
+    fd = feed.Feed(feed_filename, strip_fields)
     
     gtfs_classes = [Agency,
                     Stop,
@@ -57,10 +57,10 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
 
     # peek at the Agency table
     record = gtfs_tables[Agency].peek()
-    if 'agency_id' not in record or not record['agency_id'].strip():
-        feed_agency_id = record['agency_name'].lower().strip()
+    if 'agency_id' not in record._fields or not record.agency_id.strip():
+        feed_agency_id = record.agency_name.lower().strip()
     else:
-        feed_agency_id = record['agency_id'].strip()
+        feed_agency_id = record.agency_id.strip()
     agency_id = agency_id_override or feed_agency_id
 
     if drop_agency:
@@ -75,15 +75,13 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
         gtfs_table = gtfs_tables[gtfs_class]
         for i, record in enumerate(gtfs_table):
             if len(record) > 0:
-                if strip_fields is True:
-                    record_stripped = {}
-                    for key in record:
-                        record_stripped[key.strip()] = record[key].strip()
-                    record = record_stripped
-                if getattr(record, 'agency_id', feed_agency_id).strip() != feed_agency_id:
+                if 'agency_id' not in record._fields:
+                    instance = gtfs_class(agency_id=agency_id, **record._asdict())
+                elif record.agency_id == feed_agency_id:
+                    instance = gtfs_class(**record._asdict())
+                else:
                     raise Exception('Loading multiple agencies from the same feed is not supported')
-                record['agency_id'] = agency_id
-                instance = gtfs_class(**record)
+
                 schedule.session.add(instance)
                 if i % commit_chunk == 0 and i > 0:
                     if not drop_agency:
