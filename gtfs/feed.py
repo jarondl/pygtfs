@@ -40,6 +40,7 @@ class Feed(object):
 
     def __init__(self, filename, strip_fields=True):
         self.filename = filename 
+        self.feed_name = os.path.basename(filename.rstrip('/'))
         self.zf = None
         self.strip_fields = strip_fields
         if not os.path.isdir(filename):

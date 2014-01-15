@@ -6,11 +6,11 @@ import feed
 import sys
 
 def drop_then_load(*args, **kwargs):
-    kwargs['drop_agency'] = True
+    kwargs['drop_feed'] = True
     load(*args, **kwargs)
 
 def load(feed_filename, db_connection=":memory:", strip_fields=True,
-         commit_chunk=500, drop_agency=False, agency_id_override=None, **kwargs):
+         commit_chunk=500, drop_feed=False, agency_id_override=None, **kwargs):
     if 'db_filename' in kwargs:
         db_connection = kwargs['db_filename']
     schedule = Schedule(db_connection)
@@ -55,19 +55,11 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
                       gtfs_filename)
                 continue
 
-    # peek at the Agency table
-    record = gtfs_tables[Agency].peek()
-    if 'agency_id' not in record._fields or not record.agency_id.strip():
-        feed_agency_id = record.agency_name.lower().strip()
-    else:
-        feed_agency_id = record.agency_id.strip()
-    agency_id = agency_id_override or feed_agency_id
-
-    if drop_agency:
+    if drop_feed:
         # reversed so we don't trip-up on foreign key constraints
         for gtfs_class in reversed(gtfs_classes):
             schedule.session.query(gtfs_class).\
-                filter(gtfs_class.agency_id==agency_id).\
+                filter(gtfs_class.feed_name==fd.feed_name).\
                 delete()
     for gtfs_class in gtfs_classes:
         if gtfs_class not in gtfs_tables:
@@ -75,21 +67,15 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
         gtfs_table = gtfs_tables[gtfs_class]
         for i, record in enumerate(gtfs_table):
             if len(record) > 0:
-                if 'agency_id' not in record._fields:
-                    instance = gtfs_class(agency_id=agency_id, **record._asdict())
-                elif record.agency_id == feed_agency_id:
-                    instance = gtfs_class(**record._asdict())
-                else:
-                    raise Exception('Loading multiple agencies from the same feed is not supported')
-
+                instance = gtfs_class(feed_name=fd.feed_name, **record._asdict())
                 schedule.session.add(instance)
                 if i % commit_chunk == 0 and i > 0:
-                    if not drop_agency:
+                    if not drop_feed:
                         schedule.session.commit()
                     sys.stdout.write('.')
                     sys.stdout.flush()
         print('%d record%s committed.' % ((i+1), '' if i == 0 else 's'))
-        if not drop_agency:
+        if not drop_feed:
             schedule.session.commit()
     schedule.session.commit()
 
