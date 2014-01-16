@@ -50,9 +50,7 @@ class Feed(object):
         return '<Feed %s>' % self.filename
 
     def unicode_csv_reader(self, file_handle, encoding='utf-8'):
-        if encoding == 'utf-8':
-            encoding_sig = 'utf-8-sig'
-        reader = csv.reader([x.encode(encoding) for x in iterdecode(file_handle, encoding_sig)])
+        reader = csv.reader((x.encode(encoding) for x in iterdecode(file_handle,'utf-8-sig')))
         for row in reader:
             yield [unicode(x, encoding) for x in row]
         return

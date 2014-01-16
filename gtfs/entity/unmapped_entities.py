@@ -108,14 +108,14 @@ class Agency(Entity):
     # hope people aren't both omitting agency_ids and duping agency_names. 
     
     fields = [
-              Field('feed_name', Unicode, cast=unicode, primary_key=True),
-              Field('agency_id', Unicode, cast=unicode, primary_key=True, default="NONE"),
-              Field('agency_name', Unicode, cast=unicode, mandatory=True),
-              Field('agency_url', Unicode, cast=unicode, mandatory=True),
+              Field('feed_name', Unicode,  primary_key=True),
+              Field('agency_id', Unicode, primary_key=True, default=u"NONE"),
+              Field('agency_name', Unicode,  mandatory=True),
+              Field('agency_url', Unicode, mandatory=True),
               Field('agency_timezone', PickleType, cast=pytz.timezone, mandatory=True),
-              Field('agency_lang', Unicode, cast=unicode),
-              Field('agency_phone', Unicode, cast=unicode),
-              Field('agency_fare_url', Unicode, cast=unicode),
+              Field('agency_lang', Unicode),
+              Field('agency_phone', Unicode),
+              Field('agency_fare_url', Unicode),
              ]
     
     def __repr__(self):
@@ -133,17 +133,17 @@ class Stop(Entity):
     gtfs_required = True
     
     fields = [
-              Field('feed_name', Unicode, cast=unicode, primary_key=True),
-              Field('stop_id', Unicode, cast=unicode, primary_key=True, mandatory=True),
-              Field('stop_code', Unicode, cast=unicode),
-              Field('stop_name', Unicode, cast=unicode, mandatory=True),
-              Field('stop_desc', Unicode, cast=unicode),
+              Field('feed_name', Unicode, primary_key=True),
+              Field('stop_id', Unicode, primary_key=True, mandatory=True),
+              Field('stop_code', Unicode),
+              Field('stop_name', Unicode, mandatory=True),
+              Field('stop_desc', Unicode),
               Field('stop_lat', Float, cast=float, mandatory=True),
               Field('stop_lon', Float, cast=float, mandatory=True),
-              Field('zone_id', Unicode, cast=unicode),
-              Field('stop_url', Unicode, cast=unicode),
+              Field('zone_id', Unicode),
+              Field('stop_url', Unicode),
               Field('location_type', Integer, cast=int, default=0),
-              Field('parent_station', Unicode, cast=unicode),
+              Field('parent_station', Unicode),
               Field('stop_timezone', Unicode, cast=pytz.timezone),
               Field('wheelchair_boarding', Integer, cast=int, default=0),
              ]
@@ -174,14 +174,14 @@ class Route(Entity):
     table_name = 'routes'
     gtfs_required = True
 
-    fields = [Field('agency_id', Unicode, foreign_key='%s.agency_id' % Agency.table_name, cast=unicode),
-              Field('feed_name', Unicode, cast=unicode, primary_key=True),
-              Field('route_id', Unicode, cast=unicode, primary_key=True, mandatory=True),
-              Field('route_short_name', Unicode, cast=unicode, mandatory=True, default=''),
-              Field('route_long_name', Unicode, cast=unicode, mandatory=True, default=''),
-              Field('route_desc', Unicode, cast=unicode),
+    fields = [Field('agency_id', Unicode, foreign_key='%s.agency_id' % Agency.table_name),
+              Field('feed_name', Unicode, primary_key=True),
+              Field('route_id', Unicode, primary_key=True, mandatory=True),
+              Field('route_short_name', Unicode, mandatory=True, default=''),
+              Field('route_long_name', Unicode, mandatory=True, default=''),
+              Field('route_desc', Unicode),
               Field('route_type', Integer, cast=int, mandatory=True),
-              Field('route_url', Unicode, cast=unicode),
+              Field('route_url', Unicode),
               Field('route_color', Integer, cast=int_hex, default=16777215),
               Field('route_text_color', Integer, cast=int_hex, default=0),
              ]
@@ -214,8 +214,8 @@ class Service(Entity):
     table_name = 'calendar'
     gtfs_required = False   # if this is absent you must have a calendar_dates file
     
-    fields = [Field('feed_name', Unicode, cast=unicode, primary_key=True),
-              Field('service_id', Unicode, cast=unicode, primary_key=True, mandatory=True),
+    fields = [Field('feed_name', Unicode, primary_key=True),
+              Field('service_id', Unicode, primary_key=True, mandatory=True),
               Field('monday', Boolean, cast=bool_int, mandatory=True),
               Field('tuesday', Boolean, cast=bool_int, mandatory=True),
               Field('wednesday', Boolean, cast=bool_int, mandatory=True),
@@ -248,8 +248,8 @@ class ServiceException(Entity):
     table_name = 'calendar_dates'
     gtfs_required = False
     
-    fields = [Field('feed_name', Unicode, cast=unicode, primary_key=True),
-              Field('service_id', Unicode, cast=unicode, primary_key=True, mandatory=True),
+    fields = [Field('feed_name', Unicode, primary_key=True),
+              Field('service_id', Unicode, primary_key=True, mandatory=True),
               Field('date', Date, cast=date_yyyymmdd, primary_key=True, mandatory=True),
               Field('exception_type', Integer, cast=int, mandatory=True),
              ]
@@ -270,15 +270,15 @@ class Trip(Entity):
     table_name = 'trips'
     gtfs_required = True
 
-    fields = [Field('feed_name', Unicode, cast=unicode, primary_key=True),
-              Field('route_id', Unicode, cast=unicode, mandatory=True),
-              Field('service_id', Unicode, cast=unicode, mandatory=True),
-              Field('trip_id', Unicode, cast=unicode, primary_key=True, mandatory=True),
-              Field('trip_headsign', Unicode, cast=unicode),
-              Field('trip_short_name', Unicode, cast=unicode),
+    fields = [Field('feed_name', Unicode, primary_key=True),
+              Field('route_id', Unicode, mandatory=True),
+              Field('service_id', Unicode, mandatory=True),
+              Field('trip_id', Unicode, primary_key=True, mandatory=True),
+              Field('trip_headsign', Unicode),
+              Field('trip_short_name', Unicode),
               Field('direction_id', Integer, cast=int),
-              Field('block_id', Unicode, cast=unicode),
-              Field('shape_id', Unicode, cast=unicode),
+              Field('block_id', Unicode),
+              Field('shape_id', Unicode),
              ]
     foreign_key_constraints = [ForeignKeyConstraint(['feed_name', 'route_id'], ['%s.feed_name' % Route.table_name, '%s.route_id' % Route.table_name]),
                                ForeignKeyConstraint(['feed_name', 'service_id'], ['%s.feed_name' % Service.table_name, '%s.service_id' % Service.table_name])]
@@ -299,13 +299,13 @@ class StopTime(Entity):
     table_name = 'stop_times'
     gtfs_required = True
     
-    fields = [Field('feed_name', Unicode, cast=unicode, primary_key=True),
-              Field('trip_id', Unicode, cast=unicode, primary_key=True, mandatory=True),
+    fields = [Field('feed_name', Unicode, primary_key=True),
+              Field('trip_id', Unicode, primary_key=True, mandatory=True),
               Field('arrival_time', Interval, cast=timedelta_hms, mandatory=True),
               Field('departure_time', Interval, cast=timedelta_hms, mandatory=True),
-              Field('stop_id', Unicode, cast=unicode, primary_key=True, mandatory=True),
+              Field('stop_id', Unicode, primary_key=True, mandatory=True),
               Field('stop_sequence', Integer, cast=int, primary_key=True, mandatory=True),
-              Field('stop_headsign', Unicode, cast=unicode),
+              Field('stop_headsign', Unicode),
               Field('pickup_type', Integer, cast=int, default=0),
               Field('drop_off_type', Integer, cast=int, default=0),
               Field('shape_dist_traveled', Float, cast=float),
@@ -337,10 +337,10 @@ class Fare(Entity):
     table_name = 'fare_attributes'
     gtfs_required = False
     
-    fields = [Field('feed_name', Unicode, cast=unicode, primary_key=True),
-              Field('fare_id', Unicode, cast=unicode, primary_key=True, mandatory=True),
+    fields = [Field('feed_name', Unicode, primary_key=True),
+              Field('fare_id', Unicode, primary_key=True, mandatory=True),
               Field('price', Float, cast=float, mandatory=True),
-              Field('currency_type', Unicode, cast=unicode, mandatory=True),
+              Field('currency_type', Unicode, mandatory=True),
               Field('payment_method', Integer, cast=int, mandatory=True),
               Field('transfers', Integer, cast=int),
               Field('transfer_duration', Float, cast=float),
@@ -361,12 +361,12 @@ class FareRule(Entity):
     table_name = 'fare_rules'
     gtfs_required = False
     
-    fields = [Field('feed_name', Unicode, cast=unicode, primary_key=True),
-              Field('fare_id', Unicode, cast=unicode, primary_key=True, mandatory=True),
-              Field('route_id', Unicode, cast=unicode, primary_key=True, default=''),
-              Field('origin_id', Unicode, cast=unicode, primary_key=True, default=''),
-              Field('destination_id', Unicode, cast=unicode, primary_key=True, default=''),
-              Field('contains_id', Unicode, cast=unicode, primary_key=True, default=''),
+    fields = [Field('feed_name', Unicode, primary_key=True),
+              Field('fare_id', Unicode, primary_key=True, mandatory=True),
+              Field('route_id', Unicode, primary_key=True, default=''),
+              Field('origin_id', Unicode, primary_key=True, default=''),
+              Field('destination_id', Unicode, primary_key=True, default=''),
+              Field('contains_id', Unicode, primary_key=True, default=''),
              ]
     foreign_key_constraints = [ForeignKeyConstraint(['feed_name', 'fare_id'], ['%s.feed_name' % Fare.table_name, '%s.fare_id' % Fare.table_name]),
                                ForeignKeyConstraint(['feed_name', 'route_id'], ['%s.feed_name' % Route.table_name, '%s.route_id' % Route.table_name])]
@@ -384,8 +384,8 @@ class ShapePoint(Entity):
     table_name = 'shapes'
     gtfs_required = False
     
-    fields = [Field('feed_name', Unicode, cast=unicode, primary_key=True),
-              Field('shape_id', Unicode, cast=unicode, primary_key=True, mandatory=True),
+    fields = [Field('feed_name', Unicode, primary_key=True),
+              Field('shape_id', Unicode, primary_key=True, mandatory=True),
               Field('shape_pt_lat', Float, cast=float, primary_key=True, mandatory=True),
               Field('shape_pt_lon', Float, cast=float, primary_key=True, mandatory=True),
               Field('shape_pt_sequence', Integer, cast=int, primary_key=True, mandatory=True),
@@ -413,8 +413,8 @@ class Frequency(Entity):
     table_name = 'frequencies'
     gtfs_required = False
     
-    fields = [Field('feed_name', Unicode, cast=unicode, primary_key=True),
-              Field('trip_id', Unicode, cast=unicode, primary_key=True, mandatory=True),
+    fields = [Field('feed_name', Unicode, primary_key=True),
+              Field('trip_id', Unicode, primary_key=True, mandatory=True),
               Field('start_time', Interval, cast=timedelta_hms, 
                     primary_key=True, mandatory=True),
               Field('end_time', Interval, cast=timedelta_hms, 
@@ -439,13 +439,11 @@ class Transfer(Entity):
     table_name = 'transfers'
     gtfs_required = False
     
-    fields = [Field('feed_name', Unicode, cast=unicode, primary_key=True),
-              Field('from_stop_id', Unicode,
-                    cast=unicode, primary_key=True, mandatory=True),
-              Field('to_stop_id', Unicode,
-                    cast=unicode, primary_key=True, mandatory=True),
+    fields = [Field('feed_name', Unicode, primary_key=True),
+              Field('from_stop_id', Unicode, primary_key=True, mandatory=True),
+              Field('to_stop_id', Unicode, primary_key=True, mandatory=True),
               Field('transfer_type', Integer, cast=int, mandatory=True, default=0),
-              Field('min_transfer_time', Unicode, cast=unicode),
+              Field('min_transfer_time', Unicode),
              ]
     foreign_key_constraints = [ForeignKeyConstraint(['feed_name', 'from_stop_id'], ['%s.feed_name' % Stop.table_name, '%s.stop_id' % Stop.table_name]),
                                ForeignKeyConstraint(['feed_name', 'to_stop_id'], ['%s.feed_name' % Stop.table_name, '%s.stop_id' % Stop.table_name])]
@@ -465,13 +463,13 @@ class FeedInfo(Entity):
     table_name = 'feed_info'
     gtfs_required = False
     
-    fields = [Field('feed_name', Unicode, cast=unicode, primary_key=True),
-              Field('feed_publisher_name', Unicode, cast=unicode, primary_key=True, mandatory=True),
-              Field('feed_publisher_url', Unicode, cast=unicode, mandatory=True),
-              Field('feed_lang', Unicode, cast=unicode, mandatory=True),
+    fields = [Field('feed_name', Unicode, primary_key=True),
+              Field('feed_publisher_name', Unicode, primary_key=True, mandatory=True),
+              Field('feed_publisher_url', Unicode, mandatory=True),
+              Field('feed_lang', Unicode, mandatory=True),
               Field('feed_start_date', Date, cast=date_yyyymmdd),
               Field('feed_end_date', Date, cast=date_yyyymmdd),
-              Field('feed_version', Unicode, cast=unicode),
+              Field('feed_version', Unicode),
              ]
     
     def __repr__(self):
