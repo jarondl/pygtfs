@@ -1,3 +1,4 @@
+from __future__ import division, absolute_import, print_function, unicode_literals
 from codecs import iterdecode
 from collections import namedtuple
 from zipfile import ZipFile
@@ -58,7 +59,7 @@ class Feed(object):
     def reader(self, filename, encoding='utf-8'):
         if self.zf:
             try:
-                file_handle = self.zf.read(filename).split('\n')
+                file_handle = self.zf.open(filename, 'rU')
             except IOError:
                 raise IOError('%s is not present in feed' % filename)
         else:

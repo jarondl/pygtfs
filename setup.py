@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
 setup(
-    name='gtfs-sql',
-    version='0.1a1',
-    author='Andrew Lim',
+    name='pytgtfs',
+    version='0.1.0',
+    author='Yaron de Leeuw',
     description='Models GTFS data and saves it to/reads it from a database.',
     license='MIT',
     keywords='gtfs',
-    url='https://github.com/andrewblim/gtfs-sql',
+    url='https://github.com/jarondl/pygtfs',
     packages = find_packages(),
     install_requires=['sqlalchemy>=0.7.8',
                       'pytz>=2012d',

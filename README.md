@@ -1,16 +1,18 @@
-gtfs-sql
+pygtfs
 ========
 
 Overview
 --------
 
-Latest version: 0.1a1
+Latest version: 0.1.0
 
-gtfs-sql is a library that reads and models information stored in Google's [General Transit Feed Specification (GTFS)](https://developers.google.com/transit/) format. GTFS is a format designed to specify information about a transit system, such as a city's subways or a private company's bus services. gtfs-sql stores information in an SQLite database using SQLAlchemy to facilitate the storage of Python objects in a relational database. 
+pygtfs is a library that reads and models information stored in Google's [General Transit Feed Specification (GTFS)](https://developers.google.com/transit/) format. GTFS is a format designed to specify information about a transit system, such as a city's subways or a private company's bus services. gtfs-sql stores information in an SQLite database using SQLAlchemy to facilitate the storage of Python objects in a relational database. 
 
-gtfs is a fork of bmander's gtfs. Although they are very similar, I changed some of the variable names and conventions, so you shouldn't expect them to be precisely "compatible" with each other. 
+pygtfs is a fork of @eoghanmurray's fork of a @andrewblim's gtfs-sql which is
+a fork of @bmander's gtfs. See the git logs for more fun history.
 
-License: MIT, included in `license.txt`. The original gtfs code did not include any license information; I always specify licenses out of habit; MIT is a fairly permissive license in any case. 
+License: MIT, included in `license.txt`.
+
 
 Dependencies
 ------------
@@ -26,7 +28,7 @@ Get [setuptools](http://pypi.python.org/pypi/setuptools) if you don't have it, c
 Basic usage
 -----------
 
-To include gtfs-sql functionality in your application, use `import gtfs`. 
+To include pygtfs functionality in your application, use `import pygtfs`. 
 
 If you have GTFS data either as a zip file or as a collection of files in a folder, you can load the data into an in-memory SQLite database and into a Schedule variable as follows (using [BART](http://www.bart.gov/) data as an example): 
 
@@ -48,23 +50,24 @@ The Schedule object represents a collection of objects that correspond to the co
     >>> sched.routes
     [<Route AirBART: >, <Route 01: >, <Route 03: >, <Route 05: >, <Route 07: >, <Route 11: >]
 
-For GTFS entities that are identified by a dataset-unique identifier, you can also use the above attributes with `_by_id` appended to get a dictionary keyed on that identifier. So for example: 
+For GTFS entities that are identified by a dataset-unique identifier, there is
+also a function to get them by id: 
 
-    >>> sched.agencies_by_id
-    {u'AirBART': <Agency AirBART: AirBART>, u'BART': <Agency BART: Bay Area Rapid Transit>}
-    >>> sched.stops_by_id['SFIA']
-    <Stop SFIA: San Francisco Int'l Airport>
+    >>> sched.agencies_by_id('AirBART')
+    [<Agency AirBART: AirBART>]
+    >>> sched.stops_by_id('SFIA')
+    [<Stop SFIA: San Francisco Int'l Airport>]
 
 The GTFS entity objects have attributes that correspond in name to the field definitions in the [GTFS reference](https://developers.google.com/transit/gtfs/reference). 
 
-    >>> sched.stops_by_id['SFIA'].stop_name
+    >>> sched.stops_by_id('SFIA')[0].stop_name
     u"San Francisco Int'l Airport"
     >>> sched.routes[1].route_long_name
     u'Pittsburg/Bay Point - SFIA/Millbrae'
 
 GTFS entities which cross-reference each other can also be obtained straightforwardly with attributes (again, see "Reference" below for full details):
 
-    >>> sched.trips_by_id['01SFO10'].service  # the service associated with trip 01SFO10
+    >>> sched.trips_by_id('01SFO10').service  # the service associated with trip 01SFO10
     <Service WKDY (MTWThFSSu)>
 
 gtfs2db
@@ -174,3 +177,11 @@ To-do
 -----
 
 - Improve testing; add some unit testing framework and test with a variety of GTFS data feeds. 
+
+Why fork?
+--------------
+- natively support several gtfs feeds per database
+- less SLOC, more DRY
+- add python3 support (really soon)
+- renamed to a more generic name
+- will continue to maintain
