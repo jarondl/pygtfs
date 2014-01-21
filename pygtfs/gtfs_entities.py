@@ -48,13 +48,13 @@ class GtfsBool(TypeDecorator):
 def validate_int_choice(int_choice, *field_names):
     @validates(*field_names)
     def in_range(self, key, value):
-        try:
-            int_value = int(value)
-        except ValueError:
-            if value is None:
-                int_value = None
+        if ((value is None) or (value == '')):
+            if (None in int_choice):
+                return None 
             else:
-                raise
+                raise ValueError("Empty value not allowed in {0}".format(key))
+        else:
+            int_value = int(value)
         assert int_value in int_choice, "value outside limits"
         return int_value
     return in_range
@@ -199,7 +199,7 @@ class Trip(Base):
 
     __table_args__ = create_foreign_keys('routes.route_id', 'calendar.service_id', 'calendar_dates.service_id', 'shapes.shape_id')
 
-    _validate_direction_id = validate_int_choice([0,1], 'direction_id')
+    _validate_direction_id = validate_int_choice([None,0,1], 'direction_id')
     _validate_wheelchair = validate_int_choice([0,1,2], 'wheelchair_accessible')
 
     def __repr__(self):
@@ -221,7 +221,7 @@ class StopTime(Base):
 
     __table_args__ = create_foreign_keys('trips.trip_id', 'stops.stop_id')
 
-    _validate_pickup_drop_off = validate_int_choice([0,1,2,3], 'pickup_type', 'drop_off_type')
+    _validate_pickup_drop_off = validate_int_choice([None,0,1,2,3], 'pickup_type', 'drop_off_type')
 
     def __repr__(self):
         return '<StopTime %s: %d>' % (self.trip_id, self.stop_sequence)

@@ -45,7 +45,11 @@ def load(feed_filename, db_connection=":memory:", strip_fields=True,
         gtfs_table = gtfs_tables[gtfs_class]
         for i, record in enumerate(gtfs_table):
             if len(record) > 0:
-                instance = gtfs_class(feed_id = feed_id, **record._asdict())
+                try:
+                    instance = gtfs_class(feed_id = feed_id, **record._asdict())
+                except:
+                    print("Failure while writing {0}".format(record))
+                    raise
                 schedule.session.add(instance)
                 if i % commit_chunk == 0 and i > 0:
                     if not drop_feed:
