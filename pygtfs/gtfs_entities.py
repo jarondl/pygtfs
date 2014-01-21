@@ -4,48 +4,39 @@ import datetime
 import re
 
 import pytz
-from sqlalchemy import Table, MetaData, Column, ForeignKey, ForeignKeyConstraint
-from sqlalchemy.types import String, Unicode, Integer, Float, Boolean, Date, Interval, PickleType, TypeDecorator, Numeric
+from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint
+from sqlalchemy.types import Unicode, Integer, Float, Boolean, Date, Interval, PickleType, TypeDecorator, Numeric
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates, synonym
 
 Base = declarative_base()
 
-class GtfsColor(TypeDecorator):
-    impl = Integer
-    def process_bind_param(self, value, dialect):
-        try:
-            return int(value, 16)
-        except ValueError:
-            if value == '':
-                return None
-            else:
-                raise
 
-class GtfsDate(TypeDecorator):
-    impl = Date
-    def process_bind_param(self, value, dialect):
-        return datetime.datetime.strptime(value, '%Y%m%d').date()
 
-class GtfsTimeDelta(TypeDecorator):
-    impl = Interval
-    def process_bind_param(self, value, dialect):
+def _validate_date(*field_names):
+    @validates(*field_names)
+    def make_date(self, key, value):
+        return datetime.datetime.strptime(value, '%Y%m%d').date() 
+    return make_date
+
+
+def _validate_time_delta(*field_names):
+    @validates(*field_names)
+    def time_delta(self, key, value):
         (hours, minutes, seconds) = map(int, re.split(':', value))
         return datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
+    return time_delta
+        
 
-class GtfsBool(TypeDecorator):
-    impl = Boolean
-    def process_bind_param(self, value, dialect):
+def _validate_int_bool(*field_names):
+    @validates(*field_names)
+    def int_bool(self, key, value):
+        assert value in ["0","1"] , "value must be 0 or 1"
         return bool(int(value))
+    return int_bool
+            
 
-#class GtfsTimeZone(TypeDecorator):
-#    impl = PickleType
-#    def process_bind_param(self, value, dialect):
-#        if value is not None:
-#            return pytz.timezone(value)
-#        return None
-
-def validate_int_choice(int_choice, *field_names):
+def _validate_int_choice(int_choice, *field_names):
     @validates(*field_names)
     def in_range(self, key, value):
         if ((value is None) or (value == '')):
@@ -59,7 +50,7 @@ def validate_int_choice(int_choice, *field_names):
         return int_value
     return in_range
 
-def validate_float_range(float_min, float_max, *field_names):
+def _validate_float_range(float_min, float_max, *field_names):
     @validates(*field_names)
     def in_range(self, key, value):
         float_value = float(value)
@@ -146,9 +137,9 @@ class Stop(Base):
     transfers_from = relationship('Transfer', backref="stop_from", foreign_keys='Transfer.from_stop_id')
 
 
-    _validate_location = validate_int_choice([0,1], 'location_type')
-    _validate_wheelchair = validate_int_choice([0,1,2], 'wheelchair_boarding')
-    _validate_lon_lat = validate_float_range(-180,180, 'stop_lon', 'stop_lat')
+    _validate_location = _validate_int_choice([0,1], 'location_type')
+    _validate_wheelchair = _validate_int_choice([0,1,2], 'wheelchair_boarding')
+    _validate_lon_lat = _validate_float_range(-180,180, 'stop_lon', 'stop_lat')
 
     def __repr__(self):
         return '<Stop %s: %s>' % (self.stop_id, self.stop_name)
@@ -165,15 +156,15 @@ class Route(Base):
     route_desc = Column(Unicode, nullable=True)
     route_type = Column(Integer)
     route_url = Column(Unicode, nullable=True)
-    route_color = Column(GtfsColor, nullable=True)
-    route_text_color = Column(Integer, nullable=True)
+    route_color = Column(Unicode, nullable=True)
+    route_text_color = Column(Unicode, nullable=True)
 
     __table_args__ = create_foreign_keys('agency.agency_id')
 
     trips = relationship("Trip", backref="route")
     fare_rules = relationship("FareRule", backref="route")
     
-    _validate_route_type = validate_int_choice(range(8), 'route_type')
+    _validate_route_type = _validate_int_choice(range(8), 'route_type')
 
     def __repr__(self):
         return '<Route %s: %s>' % (self.route_id, self.route_short_name)
@@ -199,8 +190,8 @@ class Trip(Base):
 
     __table_args__ = create_foreign_keys('routes.route_id', 'calendar.service_id', 'calendar_dates.service_id', 'shapes.shape_id')
 
-    _validate_direction_id = validate_int_choice([None,0,1], 'direction_id')
-    _validate_wheelchair = validate_int_choice([0,1,2], 'wheelchair_accessible')
+    _validate_direction_id = _validate_int_choice([None,0,1], 'direction_id')
+    _validate_wheelchair = _validate_int_choice([0,1,2], 'wheelchair_accessible')
 
     def __repr__(self):
         return '<Trip %s>' % self.trip_id
@@ -210,8 +201,8 @@ class StopTime(Base):
     _plural_name_ = 'stop_times'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     trip_id = Column(Unicode, primary_key=True)
-    arrival_time = Column(GtfsTimeDelta)
-    departure_time = Column(GtfsTimeDelta)
+    arrival_time = Column(Interval)
+    departure_time = Column(Interval)
     stop_id = Column(Unicode, primary_key=True)
     stop_sequence = Column(Integer, primary_key=True)
     stop_headsign = Column(Unicode)
@@ -221,7 +212,8 @@ class StopTime(Base):
 
     __table_args__ = create_foreign_keys('trips.trip_id', 'stops.stop_id')
 
-    _validate_pickup_drop_off = validate_int_choice([None,0,1,2,3], 'pickup_type', 'drop_off_type')
+    _validate_pickup_drop_off = _validate_int_choice([None,0,1,2,3], 'pickup_type', 'drop_off_type')
+    _validate_arrival_departure = _validate_time_delta('arrival_time', 'departure_time')
 
     def __repr__(self):
         return '<StopTime %s: %d>' % (self.trip_id, self.stop_sequence)
@@ -233,17 +225,21 @@ class Service(Base):
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     service_id = Column(Unicode, primary_key=True)
     id = synonym('service_id')
-    monday = Column(GtfsBool)
-    tuesday = Column(GtfsBool)
-    wednesday = Column(GtfsBool)
-    thursday = Column(GtfsBool)
-    friday = Column(GtfsBool)
-    saturday = Column(GtfsBool)
-    sunday = Column(GtfsBool)
-    start_date = Column(GtfsDate)
-    end_date = Column(GtfsDate)
+    monday = Column(Boolean)
+    tuesday = Column(Boolean)
+    wednesday = Column(Boolean)
+    thursday = Column(Boolean)
+    friday = Column(Boolean)
+    saturday = Column(Boolean)
+    sunday = Column(Boolean)
+    start_date = Column(Date)
+    end_date = Column(Date)
 
     trips = relationship("Trip", backref="service")
+
+    _validate_bools = _validate_int_bool('monday', 'tuesday', 'wednesday',
+                                         'thursday', 'friday','saturday', 'sunday')
+    _validate_dates = _validate_date('start_date', 'end_date')
 
     def __repr__(self):
         dayofweek = ''
@@ -263,10 +259,11 @@ class ServiceException(Base):
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     service_id = Column(Unicode, primary_key=True)
     id = synonym('service_id')
-    date = Column(GtfsDate, primary_key=True)
+    date = Column(Date, primary_key=True)
     exception_type = Column(Integer)
 
-    _validate_exception_type = validate_int_choice([1,2], 'exception_type')
+    _validate_exception_type = _validate_int_choice([1,2], 'exception_type')
+    _validate_dates = _validate_date('date')
 
     def __repr__(self):
         return '<ServiceException %s: %s>' % (self.service_id, self.date)
@@ -286,8 +283,8 @@ class Fare(Base):
     transfers = Column(Integer, nullable=True) # it is required, but allowed to be empty
     transfer_duration = Column(Integer, nullable=True)
 
-    _validate_payment_method = validate_int_choice([0,1], 'payment_method')
-    _validate_transfers = validate_int_choice([None, 0,1,2], 'transfers')
+    _validate_payment_method = _validate_int_choice([0,1], 'payment_method')
+    _validate_transfers = _validate_int_choice([None, 0,1,2], 'transfers')
 
     def __repr__(self):
         return '<Fare %s>' % self.fare_id
@@ -324,7 +321,7 @@ class ShapePoint(Base):
 
     trips = relationship("Trip", backref="shape_points")
 
-    _validate_lon_lat = validate_float_range(-180,180, 'shape_pt_lon', 'shape_pt_lat')
+    _validate_lon_lat = _validate_float_range(-180,180, 'shape_pt_lon', 'shape_pt_lat')
 
     def __repr__(self):
         return '<ShapePoint %s>' % self.shape_id
@@ -335,14 +332,15 @@ class Frequency(Base):
     _plural_name_ = 'frequencies'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     trip_id = Column(Unicode, primary_key=True)
-    start_time = Column(GtfsTimeDelta, primary_key=True)
-    end_time = Column(GtfsTimeDelta, primary_key=True)
+    start_time = Column(Interval, primary_key=True)
+    end_time = Column(Interval, primary_key=True)
     headway_secs = Column(Integer)
     exact_times = Column(Integer, nullable=True)
 
     __table_args__ = create_foreign_keys('trips.trip_id')
 
-    _validate_exact_times = validate_int_choice([None,0,1], 'exact_times')
+    _validate_exact_times = _validate_int_choice([None,0,1], 'exact_times')
+    _validate_deltas = _validate_time_delta('start_time', 'end_time')
 
     def __repr__(self):
         return '<Frequency %s %s-%s>' % (self.trip_id, self.start_time, self.end_time)
@@ -357,7 +355,7 @@ class Transfer(Base):
     transfer_type = Column(Integer, nullable=True) # required but empty is allowed
     min_transfer_time = Column(Integer, nullable=True)
 
-    _validate_transfer_type = validate_int_choice([None,0,1,2,3], 'transfer_type')
+    _validate_transfer_type = _validate_int_choice([None,0,1,2,3], 'transfer_type')
 
     def __repr__(self):
         return "<Transfer %s-%s>" % (self.from_stop_id, self.to_stop_id)
@@ -371,9 +369,11 @@ class FeedInfo(Base):
     feed_publisher_name = Column(Unicode, primary_key=True)
     feed_publisher_url = Column(Unicode, primary_key=True)
     feed_lang = Column(Unicode)
-    feed_start_date = Column(GtfsDate, nullable=True)
-    feed_end_date = Column(GtfsDate, nullable=True)
+    feed_start_date = Column(Date, nullable=True)
+    feed_end_date = Column(Date, nullable=True)
     feed_version = Column(Unicode, nullable=True)
+
+    _validate_start_end = _validate_date('feed_start_date', 'feed_end_date')
 
     def __repr__(self):
         return "<FeedInfo %s>" % self.feed_publisher_name

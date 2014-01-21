@@ -26,7 +26,10 @@ class Schedule:
         metadata.create_all(self.engine) 
 
     def drop_feed(self, feed_id):
-        self.session.query(Feed).filter(Feed.feed_id == feed_id).delete()
+        # the following does not cascade unfortunatly.
+        #self.session.query(Feed).filter(Feed.feed_id == feed_id).delete()
+        feed = self.session.query(Feed).get(feed_id)
+        self.session.delete(feed)
         self.session.commit()
 
 def _meta_query_all(entity):
