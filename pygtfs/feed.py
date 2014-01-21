@@ -1,9 +1,14 @@
 from __future__ import division, absolute_import, print_function, unicode_literals
+
+import os
+import io
+import csv
+
 from codecs import iterdecode
 from collections import namedtuple
 from zipfile import ZipFile
-import os
-import csv
+
+import six
 
 def _row_stripper(row):
     return (cell.strip() for cell in row)
@@ -11,11 +16,10 @@ def _row_stripper(row):
 class CSV(object):
     """A CSV file."""
 
-    def __init__(self, header, rows, feedtype='CSVTuple'):
-        self.header = header
-        self.Tuple = namedtuple(feedtype, header)
+    def __init__(self, rows, feedtype='CSVTuple'):
+        self.header = six.next(rows)
+        self.Tuple = namedtuple(feedtype, self.header)
         self.rows = rows
-        self.peek_queue = []
 
     def __repr__(self):
         return '<CSV %s>' % self.header
@@ -23,17 +27,10 @@ class CSV(object):
     def __iter__(self):
         return self
 
-    def _next(self):
-        return self.Tuple._make(self.rows.next())
+    def __next__(self):
+        return self.Tuple._make(six.next(self.rows))
+    next = __next__  # python 2 compatible
 
-    def next(self):
-        if self.peek_queue:
-            return self.peek_queue.pop(0)
-        return self._next()
-
-    def peek(self):
-        self.peek_queue.append(self._next())
-        return self.peek_queue[-1]
 
 class Feed(object):
     """A collection of CSV files with headers, either zipped into an archive
@@ -46,25 +43,29 @@ class Feed(object):
         self.strip_fields = strip_fields
         if not os.path.isdir(filename):
             self.zf = ZipFile(filename)
+        if six.PY2:
+            self.csv_reader = self.unicode_csv_reader
+        else:
+            self.csv_reader = csv.reader
     
     def __repr__(self):
         return '<Feed %s>' % self.filename
 
-    def unicode_csv_reader(self, file_handle, encoding='utf-8'):
-        reader = csv.reader((x.encode(encoding) for x in iterdecode(file_handle,'utf-8-sig')))
+    def unicode_csv_reader(self, file_handle):
+        reader = csv.reader((x.encode('utf-8') for x in iterdecode(file_handle,'utf-8-sig')))
         for row in reader:
-            yield [unicode(x, encoding) for x in row]
+            yield [six.text_type(x, 'utf-8') for x in row]
         return
 
-    def reader(self, filename, encoding='utf-8'):
+    def reader(self, filename):
         if self.zf:
             try:
-                file_handle = self.zf.open(filename, 'rU')
+                file_handle = io.TextIOWrapper(self.zf.open(filename, 'rU'))
             except IOError:
                 raise IOError('%s is not present in feed' % filename)
         else:
             file_handle = open(os.path.join(self.filename, filename))
-        return self.unicode_csv_reader(file_handle, encoding)
+        return self.csv_reader(file_handle)
 
     def read_table(self, filename):
         if self.strip_fields:
@@ -72,4 +73,4 @@ class Feed(object):
         else:
             rows = self.reader(filename)
         feedtype = filename.rsplit('/')[-1].rsplit('.')[0].title().replace('_', '')
-        return CSV(feedtype=feedtype, header=rows.next(), rows=rows)
+        return CSV(feedtype=feedtype, rows=rows)

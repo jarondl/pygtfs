@@ -10,6 +10,7 @@ setup(
     packages = find_packages(),
     install_requires=['sqlalchemy>=0.7.8',
                       'pytz>=2012d',
+                      'six'
                      ],
     entry_points = {'console_scripts': ['gtfs2db = pygtfs.gtfs2db:main']}
 )

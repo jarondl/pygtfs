@@ -38,12 +38,12 @@ class GtfsBool(TypeDecorator):
     def process_bind_param(self, value, dialect):
         return bool(int(value))
 
-class GtfsTimeZone(TypeDecorator):
-    impl = PickleType
-    def process_bind_param(self, value, dialect):
-        if value is not None:
-            return pytz.timezone(value)
-        return None
+#class GtfsTimeZone(TypeDecorator):
+#    impl = PickleType
+#    def process_bind_param(self, value, dialect):
+#        if value is not None:
+#            return pytz.timezone(value)
+#        return None
 
 def validate_int_choice(int_choice, *field_names):
     @validates(*field_names)
@@ -113,7 +113,7 @@ class Agency(Base):
     id = synonym('agency_id')
     agency_name = Column(Unicode)
     agency_url = Column(Unicode)
-    agency_timezone = Column(GtfsTimeZone)  #### pytz.timezone????
+    agency_timezone = Column(Unicode)  #### pytz.timezone????
     agency_lang = Column(Unicode, nullable=True)
     agency_phone = Column(Unicode, nullable=True)
     agency_fare_url = Column(Unicode, nullable=True)
@@ -138,7 +138,7 @@ class Stop(Base):
     stop_url = Column(Unicode, nullable=True)
     location_type = Column(Integer, nullable=True)
     parent_station = Column(Integer, nullable=True)
-    stop_timezone = Column(GtfsTimeZone, nullable=True)
+    stop_timezone = Column(Unicode, nullable=True)
     wheelchair_boarding = Column(Integer, nullable=True)
 
     stop_times = relationship('StopTime', backref="stop")
