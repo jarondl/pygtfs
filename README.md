@@ -6,7 +6,7 @@ Overview
 
 Latest version: 0.1.0
 
-pygtfs is a library that reads and models information stored in Google's [General Transit Feed Specification (GTFS)](https://developers.google.com/transit/) format. GTFS is a format designed to specify information about a transit system, such as a city's subways or a private company's bus services. gtfs-sql stores information in an SQLite database using SQLAlchemy to facilitate the storage of Python objects in a relational database. 
+pygtfs is a library that reads and models information stored in Google's [General Transit Feed Specification (GTFS)](https://developers.google.com/transit/) format. GTFS is a format designed to specify information about a transit system, such as a city's subways or a private company's bus services. pygtfs stores information in an SQLite database using SQLAlchemy to facilitate the storage of Python objects in a relational database. 
 
 pygtfs is a fork of @eoghanmurray's fork of a @andrewblim's gtfs-sql which is
 a fork of @bmander's gtfs. See the git logs for more fun history.
@@ -73,7 +73,7 @@ GTFS entities which cross-reference each other can also be obtained straightforw
 gtfs2db
 -------
 
-`setup.py install` will also install a command-line script `gtfs2db` that takes a GTFS zip file or directory as an argument and will load the data into a database usable with gtfs-sql. Run `gtfs2db --help` for more. 
+`setup.py install` will also install a command-line script `gtfs2db` that takes a GTFS zip file or directory as an argument and will load the data into a database usable with pygtfs. Run `gtfs2db --help` for more. 
 
 Reference
 ---------
@@ -163,7 +163,7 @@ All these classes inherit from the abstract `Entity` class and define the follow
 
 `load(feed_filename, db_connection=":memory:", strip_fields=True, commit_chunk=500)`
 
-`load` loads the GTFS data at `feed_filename`, which can either be a zip file or a directory containing GTFS CSV files. `db_connection` can be used to tell gtfs-sql to persist the data to disk, rather than storing it temporarily in memory. It can be either a full database uri e.g. "postgresql://postgres@localhost:5432/gtfs" or a filename for SQLite. The default name `:memory:` is a SQLAlchemy special word that corresponds to an in-memory database. 
+`load` loads the GTFS data at `feed_filename`, which can either be a zip file or a directory containing GTFS CSV files. `db_connection` can be used to tell pygtfs to persist the data to disk, rather than storing it temporarily in memory. It can be either a full database uri e.g. "postgresql://postgres@localhost:5432/gtfs" or a filename for SQLite. The default name `:memory:` is a SQLAlchemy special word that corresponds to an in-memory database. 
 
 If `strip_fields` is true each entry will have leading/trailing blanks stripped. `commit_chunk` controls how many SQL transactions are added to each database session before being committed. 
 
@@ -171,7 +171,7 @@ The `Feed` and `CSV` classes are used internally by `load`.
 
 ### Table generation and mapping
 
-The functions in `map_entities.py`, `table_def_from_entity()` and `create_and_map_tables()`, are run when gtfs-sql is imported, but are not needed otherwise. They construct tables and mappings based on the contents of `Entity.fields` plus a few extra parameters denoting relationships. I won't go into detail on them because they are not needed to use gtfs-sql.  
+The functions in `map_entities.py`, `table_def_from_entity()` and `create_and_map_tables()`, are run when pygtfs is imported, but are not needed otherwise. They construct tables and mappings based on the contents of `Entity.fields` plus a few extra parameters denoting relationships. I won't go into detail on them because they are not needed to use pygtfs.  
 
 To-do
 -----

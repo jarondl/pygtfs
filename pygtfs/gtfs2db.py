@@ -1,6 +1,6 @@
 from __future__ import division, absolute_import, print_function, unicode_literals
 from optparse import OptionParser
-from loader import load
+from pygtfs.loader import load
 import os
 
 def main():
@@ -8,7 +8,7 @@ def main():
     
     usage = 'usage: %prog [options] gtfs_file'
     epilog = ('Convert data in gtfs_file into database format. gtfs_file can be '
-              'any format supported by gtfs-sql (either a zip file or a '
+              'any format supported by pygtfs (either a zip file or a '
               'directory containing CSVs).')
     
     parser = OptionParser(usage, epilog=epilog)
