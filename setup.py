@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 setup(
-    name='pytgtfs',
+    name='pygtfs',
     version='0.1.0',
     author='Yaron de Leeuw',
     description='Models GTFS data in a database.',
