@@ -45,7 +45,6 @@ def main():
     """Script to load GTFS data into a database."""
 
     args = docopt(__doc__, version = __version__)
-    print(args)
     schedule = Schedule(args['<database>'])
 
     if args['append']:
