@@ -38,7 +38,7 @@ class Feed(object):
 
     def __init__(self, filename, strip_fields=True):
         self.filename = filename 
-        self.feed_name = os.path.basename(filename.rstrip('/'))
+        self.feed_name = derive_feed_name(filename)
         self.zf = None
         self.strip_fields = strip_fields
         if not os.path.isdir(filename):
@@ -74,3 +74,7 @@ class Feed(object):
             rows = self.reader(filename)
         feedtype = filename.rsplit('/')[-1].rsplit('.')[0].title().replace('_', '')
         return CSV(feedtype=feedtype, rows=rows)
+
+
+def derive_feed_name(filename):
+    return os.path.basename(filename.rstrip('/'))

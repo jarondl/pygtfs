@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function, unicode_litera
 import sqlalchemy
 import sqlalchemy.orm
 
-from .gtfs_entities import gtfs_all, Feed
+from .gtfs_entities import gtfs_all, Feed, Base
 
 class Schedule:
     """Represents a full GTFS data set.
@@ -20,6 +20,7 @@ class Schedule:
         self.engine = sqlalchemy.create_engine(self.db_connection, echo=False)
         Session = sqlalchemy.orm.sessionmaker(bind=self.engine)
         self.session = Session()
+        self.create_tables(Base.metadata)
 
 
     def create_tables(self, metadata):
