@@ -78,6 +78,7 @@ def append_feed(schedule, feed_filename, strip_fields=True,
             if i % chunk_size == 0 and i > 0:
                 schedule.session.flush()
                 sys.stdout.write('.')
+                sys.stdout.flush()
         print('%d record%s read for %s.' % ((i+1), '' if i == 0 else 's', gtfs_class))
     schedule.session.commit()
 
