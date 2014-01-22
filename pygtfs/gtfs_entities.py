@@ -13,7 +13,7 @@ import datetime
 import re
 
 import pytz
-from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint
+from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, Index
 from sqlalchemy.types import Unicode, Integer, Float, Boolean, Date, Interval, PickleType, TypeDecorator, Numeric
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates, synonym
@@ -109,7 +109,7 @@ class Agency(Base):
     __tablename__ = 'agency'
     _plural_name_ = 'agencies'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    agency_id = Column(Unicode, primary_key=True, default=u"None")
+    agency_id = Column(Unicode, primary_key=True, default=u"None", index=True)
     id = synonym('agency_id')
     agency_name = Column(Unicode)
     agency_url = Column(Unicode)
@@ -127,9 +127,9 @@ class Stop(Base):
     __tablename__ = 'stops'
     _plural_name_ = 'stops'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    stop_id = Column(Unicode, primary_key=True)
+    stop_id = Column(Unicode, primary_key=True, index=True)
     id = synonym('stop_id')
-    stop_code = Column(Unicode, nullable=True)
+    stop_code = Column(Unicode, nullable=True, index=True)
     stop_name = Column(Unicode)
     stop_desc = Column(Unicode, nullable=True)
     stop_lat = Column(Float)
@@ -157,7 +157,7 @@ class Route(Base):
     __tablename__ = 'routes'
     _plural_name_ = 'routes'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    route_id = Column(Unicode, primary_key=True)
+    route_id = Column(Unicode, primary_key=True, index=True)
     id = synonym('route_id')
     agency_id = Column(Unicode, default=u"None")
     route_short_name = Column(Unicode)
@@ -185,7 +185,7 @@ class Trip(Base):
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     route_id = Column(Unicode)
     service_id = Column(Unicode)
-    trip_id = Column(Unicode, primary_key=True)
+    trip_id = Column(Unicode, primary_key=True, index=True)
     id = synonym('trip_id')
     trip_headsign = Column(Unicode, nullable=True)
     trip_short_name = Column(Unicode, nullable=True)
@@ -232,7 +232,7 @@ class Service(Base):
     __tablename__ = 'calendar'
     _plural_name_ = 'services'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    service_id = Column(Unicode, primary_key=True)
+    service_id = Column(Unicode, primary_key=True, index=True)
     id = synonym('service_id')
     monday = Column(Boolean)
     tuesday = Column(Boolean)
@@ -266,7 +266,7 @@ class ServiceException(Base):
     __tablename__ = 'calendar_dates'
     _plural_name_ = 'service_excpetions'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    service_id = Column(Unicode, primary_key=True)
+    service_id = Column(Unicode, primary_key=True, index=True)
     id = synonym('service_id')
     date = Column(Date, primary_key=True)
     exception_type = Column(Integer)
@@ -284,7 +284,7 @@ class Fare(Base):
     __tablename__ = 'fare_attributes'
     _plural_name_ = 'fares'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    fare_id = Column(Unicode, primary_key=True)
+    fare_id = Column(Unicode, primary_key=True, index=True)
     id = synonym('fare_id')
     price = Column(Numeric)
     currency_type = Column(Unicode)

@@ -17,7 +17,9 @@ class CSV(object):
     """A CSV file."""
 
     def __init__(self, rows, feedtype='CSVTuple'):
-        self.header = six.next(rows)
+        self.header = list(six.next(rows))
+        #deal with annoying unnecessary boms on utf-8
+        self.header[0] = self.header[0].lstrip(u"\ufeff")
         self.Tuple = namedtuple(feedtype, self.header)
         self.rows = rows
 
