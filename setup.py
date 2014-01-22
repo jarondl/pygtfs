@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 setup(
     name='pygtfs',
-    version='0.1.0',
+    version='0.1.1',
     author='Yaron de Leeuw',
     description='Models GTFS data in a database.',
     license='MIT',
@@ -13,5 +13,10 @@ setup(
                       'six',
                       'docopt'
                      ],
-    entry_points = {'console_scripts': ['gtfs2db = pygtfs.gtfs2db:main']}
+    entry_points = {'console_scripts': ['gtfs2db = pygtfs.gtfs2db:main']},
+    classifiers = [
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3"
+        ]
 )
