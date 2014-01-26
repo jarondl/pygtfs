@@ -46,28 +46,34 @@ class Feed(object):
         if not os.path.isdir(filename):
             self.zf = ZipFile(filename)
         if six.PY2:
-            self.csv_reader = self.unicode_csv_reader
+            self.reader = self.python2_reader
         else:
-            self.csv_reader = csv.reader
+            self.reader = self.python3_reader
     
     def __repr__(self):
         return '<Feed %s>' % self.filename
 
-    def unicode_csv_reader(self, file_handle):
-        reader = csv.reader((x.encode('utf-8') for x in iterdecode(file_handle,'utf-8-sig')))
-        for row in reader:
-            yield [six.text_type(x, 'utf-8') for x in row]
-        return
-
-    def reader(self, filename):
+    def python2_reader(self, filename):
         if self.zf:
             try:
-                file_handle = io.TextIOWrapper(self.zf.open(filename, 'rU'))
+                binary_file_handle = self.zf.open(filename, 'rU')
             except IOError:
                 raise IOError('%s is not present in feed' % filename)
         else:
-            file_handle = open(os.path.join(self.filename, filename))
-        return self.csv_reader(file_handle)
+            binary_file_handle = open(os.path.join(self.filename, filename), "rb")
+        reader = csv.reader(binary_file_handle)
+        for row in reader:
+            yield [six.text_type(x, 'utf-8') for x in row]
+
+    def python3_reader(self, filename):
+        if self.zf:
+            try:
+                text_file_handle = io.TextIOWrapper(self.zf.open(filename, 'r'))
+            except IOError:
+                raise IOError('%s is not present in feed' % filename)
+        else:
+            text_file_handle = open(os.path.join(self.filename, filename), "r")
+        return csv.reader(text_file_handle)
 
     def read_table(self, filename):
         if self.strip_fields:
