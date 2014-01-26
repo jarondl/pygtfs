@@ -1,5 +1,5 @@
 Internally used modules
-===================
+=======================
 
 .. automodule:: pygtfs.feed
    :members:

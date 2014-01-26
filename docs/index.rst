@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 pygtfs - a database backed python gtfs interface!
-==================================
+=================================================
 
 Get it
 ------
