@@ -1,15 +1,15 @@
-from gtfs.loader import load
-from gtfs.schedule import Schedule
-from gtfs.types import Boolean
+from pygtfs import overwrite_feed
+from pygtfs import Schedule
 
 import unittest
 
 class TestSchedule(unittest.TestCase):
   def setUp(self):
-    self.schedule = load( "test/data/sample-feed.zip" )
+    self.schedule = Schedule(":memory:")
+    overwrite_feed(self.schedule, "test/data/sample-feed.zip" )
 
   def test_routes( self ):
-    self.assertEqual( self.schedule.routes[0].route_id, "A" )
+    self.assertEqual( self.schedule.routes[0].route_id, "AB" )
 
   def test_service_periods( self ):
     self.assertEqual( [sp.service_id for sp in self.schedule.service_periods],
@@ -18,12 +18,14 @@ class TestSchedule(unittest.TestCase):
                       Boolean )
 
   def test_stops( self ):
-    self.assertEqual( [st.stop_id for st in self.schedule.stops],
-      [u'S1', u'S2', u'S3', u'S4', u'S5', u'S6', u'S7', u'S8'] )
+    self.assertEqual([st.stop_id for st in self.schedule.stops],
+                     [u'FUR_CREEK_RES', u'BEATTY_AIRPORT', u'BULLFROG',
+                      u'STAGECOACH', u'NADAV', u'NANAA', u'DADAN', u'EMSI',
+                      u'AMV'])
 
   def test_route_trips( self ):
     self.assertEqual( [tr.trip_id for tr in self.schedule.routes[0].trips],
-      [u'AWE1', u'AWD1'] )
+      [u'AB1', u'AB2'] )
 
   def test_trip_stop_times( self ):
     self.assertEqual( [(st.arrival_time.val if st.arrival_time else None,
@@ -40,7 +42,7 @@ class TestSchedule(unittest.TestCase):
 
   def test_agencies( self ):
     self.assertEqual( [ag.agency_id for ag in self.schedule.agencies],
-      [u'FunBus'] )
+      [u'DTA'] )
 
   def test_agency_routes( self ):
     self.assertEqual( [rt.route_id for rt in self.schedule.agencies[0].routes],
