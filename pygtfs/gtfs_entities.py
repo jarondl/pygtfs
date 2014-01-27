@@ -146,7 +146,7 @@ class Stop(Base):
     transfers_from = relationship('Transfer', backref="stop_from", foreign_keys='Transfer.from_stop_id')
 
 
-    _validate_location = _validate_int_choice([0,1], 'location_type')
+    _validate_location = _validate_int_choice([None,0,1], 'location_type')
     _validate_wheelchair = _validate_int_choice([0,1,2], 'wheelchair_boarding')
     _validate_lon_lat = _validate_float_range(-180,180, 'stop_lon', 'stop_lat')
 
