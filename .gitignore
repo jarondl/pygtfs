@@ -5,3 +5,5 @@ dist
 *.egg-info
 data/*
 docs/_build
+.project
+.pydevproject
