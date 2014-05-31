@@ -68,11 +68,11 @@ class Feed(object):
     def python3_reader(self, filename):
         if self.zf:
             try:
-                text_file_handle = io.TextIOWrapper(self.zf.open(filename, 'r'))
+                text_file_handle = io.TextIOWrapper(self.zf.open(filename, "r"), encoding="utf-8")
             except IOError:
                 raise IOError('%s is not present in feed' % filename)
         else:
-            text_file_handle = open(os.path.join(self.filename, filename), "r")
+            text_file_handle = open(os.path.join(self.filename, filename), "r", encoding="utf-8")
         return csv.reader(text_file_handle)
 
     def read_table(self, filename):
