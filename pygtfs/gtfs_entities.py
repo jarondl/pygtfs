@@ -70,6 +70,18 @@ def _validate_float_range(float_min, float_max, *field_names):
         return float_value
     return in_range
 
+def _validate_float_none(*field_names):
+    @validates(*field_names)
+    def is_float_none(self, key, value):
+        try:
+            return float(value)
+        except ValueError:
+            if not value:
+                return None
+            else:
+              raise
+    return is_float_none
+
 def create_foreign_keys(*key_names):
     """ Create foreign key constraints, always including feed_id,
         and relying on convention that key name is the same"""
@@ -221,7 +233,7 @@ class StopTime(Base):
     stop_headsign = Column(Unicode)
     pickup_type = Column(Integer)
     drop_off_type = Column(Integer)
-    shape_dist_traveled = Column(Integer)
+    shape_dist_traveled = Column(Integer, nullable=True)
 
     __table_args__ = create_foreign_keys('trips.trip_id', 'stops.stop_id')
 
@@ -295,6 +307,7 @@ class Fare(Base):
     payment_method = Column(Integer) 
     transfers = Column(Integer, nullable=True) # it is required, but allowed to be empty
     transfer_duration = Column(Integer, nullable=True)
+    agency_id = Column(Unicode, nullable=True)
 
     _validate_payment_method = _validate_int_choice([0,1], 'payment_method')
     _validate_transfers = _validate_int_choice([None, 0,1,2], 'transfers')
@@ -330,11 +343,12 @@ class ShapePoint(Base):
     shape_pt_lat = Column(Float)
     shape_pt_lon = Column(Float)
     shape_pt_sequence = Column(Integer, primary_key=True)
-    shape_dist_traveled = Column(Float)
+    shape_dist_traveled = Column(Float, nullable=True)
 
     trips = relationship("Trip", backref="shape_points")
 
     _validate_lon_lat = _validate_float_range(-180,180, 'shape_pt_lon', 'shape_pt_lat')
+    _validate_shape_dist_traveled = _validate_float_none('shape_dist_traveled')
 
     def __repr__(self):
         return '<ShapePoint %s>' % self.shape_id
