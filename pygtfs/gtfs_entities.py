@@ -32,7 +32,10 @@ def _validate_date(*field_names):
 def _validate_time_delta(*field_names):
     @validates(*field_names)
     def time_delta(self, key, value):
-        (hours, minutes, seconds) = map(int, re.split(':', value))
+        try:
+            (hours, minutes, seconds) = map(int, re.split(':', value))
+        except ValueError:
+            return None
         return datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
     return time_delta
         
