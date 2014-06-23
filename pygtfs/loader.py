@@ -70,7 +70,8 @@ def append_feed(schedule, feed_filename, strip_fields=True,
         gtfs_table = gtfs_tables[gtfs_class]
         for i, record in enumerate(gtfs_table):
             if not record:
-              continue
+                # Empty row.
+                continue
             try:
                 instance = gtfs_class(feed_id = feed_id, **record._asdict())
             except:
