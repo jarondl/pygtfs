@@ -143,6 +143,7 @@ class Stop(Base):
     parent_station = Column(Integer, nullable=True)
     stop_timezone = Column(Unicode, nullable=True)
     wheelchair_boarding = Column(Integer, nullable=True)
+    platform_code = Column(Unicode, nullable=True)
 
     stop_times = relationship('StopTime', backref="stop")
     transfers_to = relationship('Transfer', backref="stop_to", foreign_keys='Transfer.to_stop_id')
