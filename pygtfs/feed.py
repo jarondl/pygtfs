@@ -32,7 +32,7 @@ class CSV(object):
     def __next__(self):
         n = tuple(six.next(self.rows))
         if n:
-          return self.Tuple._make(n)
+            return self.Tuple._make(n)
     next = __next__  # python 2 compatible
 
 
