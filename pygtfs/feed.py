@@ -30,7 +30,11 @@ class CSV(object):
         return self
 
     def __next__(self):
-        return self.Tuple._make(six.next(self.rows))
+        n = six.next(self.rows)
+        try:
+          return self.Tuple._make(n)
+        except TypeError:
+          pass
     next = __next__  # python 2 compatible
 
 
