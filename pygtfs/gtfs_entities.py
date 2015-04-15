@@ -13,7 +13,7 @@ import datetime
 import re
 
 import pytz
-from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, Index
+from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, Index, and_
 from sqlalchemy.types import Unicode, Integer, Float, Boolean, Date, Interval, PickleType, TypeDecorator, Numeric
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates, synonym
@@ -262,7 +262,14 @@ class Service(Base):
     start_date = Column(Date)
     end_date = Column(Date)
 
-    trips = relationship("Trip", backref="service")
+    trips = relationship('Trip',
+        backref='service',
+        primaryjoin=and_(
+            service_id == Trip.service_id,
+            feed_id == Trip.feed_id,
+        ),
+        foreign_keys=[Trip.service_id, Trip.feed_id]
+    )
 
     _validate_bools = _validate_int_bool('monday', 'tuesday', 'wednesday',
                                          'thursday', 'friday','saturday', 'sunday')
