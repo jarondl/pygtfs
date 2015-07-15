@@ -13,7 +13,7 @@ import datetime
 import re
 
 import pytz
-from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, Index
+from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, Index, and_
 from sqlalchemy.types import Unicode, Integer, Float, Boolean, Date, Interval, PickleType, TypeDecorator, Numeric
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates, synonym
@@ -25,7 +25,7 @@ Base = declarative_base()
 def _validate_date(*field_names):
     @validates(*field_names)
     def make_date(self, key, value):
-        return datetime.datetime.strptime(value, '%Y%m%d').date() 
+        return datetime.datetime.strptime(value, '%Y%m%d').date()
     return make_date
 
 
@@ -38,7 +38,7 @@ def _validate_time_delta(*field_names):
             return None
         return datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
     return time_delta
-        
+
 
 def _validate_int_bool(*field_names):
     @validates(*field_names)
@@ -46,14 +46,14 @@ def _validate_int_bool(*field_names):
         assert value in ["0","1"] , "value must be 0 or 1"
         return bool(int(value))
     return int_bool
-            
+
 
 def _validate_int_choice(int_choice, *field_names):
     @validates(*field_names)
     def in_range(self, key, value):
         if ((value is None) or (value == '')):
             if (None in int_choice):
-                return None 
+                return None
             else:
                 raise ValueError("Empty value not allowed in {0}".format(key))
         else:
@@ -168,7 +168,7 @@ class Stop(Base):
 
     def __repr__(self):
         return '<Stop %s: %s>' % (self.stop_id, self.stop_name)
-            
+
 class Route(Base):
     __tablename__ = 'routes'
     _plural_name_ = 'routes'
@@ -188,12 +188,12 @@ class Route(Base):
 
     trips = relationship("Trip", backref="route")
     fare_rules = relationship("FareRule", backref="route")
-    
+
     _validate_route_type = _validate_int_choice(range(8), 'route_type')
 
     def __repr__(self):
         return '<Route %s: %s>' % (self.route_id, self.route_short_name)
-    
+
 
 class Trip(Base):
     __tablename__ = 'trips'
@@ -213,7 +213,9 @@ class Trip(Base):
     stop_times = relationship("StopTime", backref="trip")
     frequencies = relationship("Frequency", backref="trip")
 
-    __table_args__ = create_foreign_keys('routes.route_id', 'calendar.service_id', 'calendar_dates.service_id', 'shapes.shape_id')
+    # TODO: The service_id references to calendar or to calendar_dates.
+    # Need to implement this requirement, but not using a simple foreign key.
+    __table_args__ = create_foreign_keys('routes.route_id', 'shapes.shape_id')
 
     _validate_direction_id = _validate_int_choice([None,0,1], 'direction_id')
     _validate_wheelchair = _validate_int_choice([0,1,2], 'wheelchair_accessible')
@@ -222,7 +224,7 @@ class Trip(Base):
         return '<Trip %s>' % self.trip_id
 
 class StopTime(Base):
-    __tablename__ = 'stop_times' 
+    __tablename__ = 'stop_times'
     _plural_name_ = 'stop_times'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     trip_id = Column(Unicode, primary_key=True)
@@ -242,7 +244,7 @@ class StopTime(Base):
 
     def __repr__(self):
         return '<StopTime %s: %d>' % (self.trip_id, self.stop_sequence)
-    
+
 
 class Service(Base):
     __tablename__ = 'calendar'
@@ -260,7 +262,14 @@ class Service(Base):
     start_date = Column(Date)
     end_date = Column(Date)
 
-    trips = relationship("Trip", backref="service")
+    trips = relationship('Trip',
+        backref='service',
+        primaryjoin=and_(
+            service_id == Trip.service_id,
+            feed_id == Trip.feed_id,
+        ),
+        foreign_keys=[Trip.service_id, Trip.feed_id]
+    )
 
     _validate_bools = _validate_int_bool('monday', 'tuesday', 'wednesday',
                                          'thursday', 'friday','saturday', 'sunday')
@@ -294,7 +303,7 @@ class ServiceException(Base):
         return '<ServiceException %s: %s>' % (self.service_id, self.date)
 
 
-    
+
 
 class Fare(Base):
     __tablename__ = 'fare_attributes'
@@ -304,7 +313,7 @@ class Fare(Base):
     id = synonym('fare_id')
     price = Column(Numeric)
     currency_type = Column(Unicode)
-    payment_method = Column(Integer) 
+    payment_method = Column(Integer)
     transfers = Column(Integer, nullable=True) # it is required, but allowed to be empty
     transfer_duration = Column(Integer, nullable=True)
     agency_id = Column(Unicode, nullable=True)
@@ -322,9 +331,13 @@ class FareRule(Base):
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     fare_id = Column(Unicode, primary_key=True)
     route_id = Column(Unicode, nullable=True, primary_key=True)
-    origin_id = Column(Unicode, ForeignKey('stops.zone_id'), nullable=True, primary_key=True)
-    destination_id = Column(Unicode, ForeignKey('stops.zone_id'), nullable=True, primary_key=True)
-    contains_id = Column(Unicode, ForeignKey('stops.zone_id'), nullable=True, primary_key=True)
+
+    # TODO: add a constraint such that, each one of the following attributes
+    # must be one of the `stops.zone_id`s
+    origin_id = Column(Unicode, nullable=True, primary_key=True)
+    destination_id = Column(Unicode, nullable=True, primary_key=True)
+    contains_id = Column(Unicode, nullable=True, primary_key=True)
+
     __table_args__ = create_foreign_keys('fare_attributes.fare_id', 'routes.route_id')
 
     def __repr__(self):
@@ -342,7 +355,7 @@ class ShapePoint(Base):
     shape_id = Column(Unicode, primary_key=True)
     shape_pt_lat = Column(Float)
     shape_pt_lon = Column(Float)
-    shape_pt_sequence = Column(Integer, primary_key=True)
+    shape_pt_sequence = Column(Integer)
     shape_dist_traveled = Column(Float, nullable=True)
 
     trips = relationship("Trip", backref="shape_points")
@@ -372,15 +385,24 @@ class Frequency(Base):
     def __repr__(self):
         return '<Frequency %s %s-%s>' % (self.trip_id, self.start_time, self.end_time)
 
-    
+
 class Transfer(Base):
     __tablename__ = 'transfers'
     _plural_name_ = 'transfers'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    from_stop_id = Column(Unicode, ForeignKey('stops.stop_id'), primary_key=True)
-    to_stop_id = Column(Unicode, ForeignKey('stops.stop_id'), primary_key=True)
+    from_stop_id = Column(Unicode, primary_key=True)
+    to_stop_id = Column(Unicode, primary_key=True)
     transfer_type = Column(Integer, nullable=True) # required but empty is allowed
     min_transfer_time = Column(Integer, nullable=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ('feed_id', 'from_stop_id'), ('stops.feed_id', 'stops.stop_id')
+        ),
+        ForeignKeyConstraint(
+            ('feed_id', 'to_stop_id'), ('stops.feed_id', 'stops.stop_id')
+        ),
+    )
 
     _validate_transfer_type = _validate_int_choice([None,0,1,2,3], 'transfer_type')
 
@@ -404,7 +426,7 @@ class FeedInfo(Base):
 
     def __repr__(self):
         return "<FeedInfo %s>" % self.feed_publisher_name
-     
+
 
 # a feed can skip Service (calendar) if it has ServiceException (calendar_dates)
 
