@@ -209,6 +209,7 @@ class Trip(Base):
     block_id = Column(Unicode, nullable=True)
     shape_id = Column(Unicode, nullable=True)
     wheelchair_accessible = Column(Integer, nullable=True)
+    bikes_allowed = Column(Integer, nullable=True)
 
     stop_times = relationship("StopTime", backref="trip")
     frequencies = relationship("Frequency", backref="trip")
@@ -219,6 +220,7 @@ class Trip(Base):
 
     _validate_direction_id = _validate_int_choice([None,0,1], 'direction_id')
     _validate_wheelchair = _validate_int_choice([0,1,2], 'wheelchair_accessible')
+    _validate_bikes = _validate_int_choice([0,1,2], 'bikes_allowed')
 
     def __repr__(self):
         return '<Trip %s>' % self.trip_id

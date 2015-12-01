@@ -50,5 +50,18 @@ class TestSchedule(unittest.TestCase):
     self.assertEqual([rt.route_id for rt in self.schedule.agencies[0].routes],
                      [u'AAMV', u'AB', u'BFC', u'CITY', u'STBA'])
 
+  def test_trips_bikes_allowed(self):
+    for t in self.schedule.trips:
+      self.assertIsNone(t.bikes_allowed)
+    t = self.schedule.trips[0]
+    t.bikes_allowed = 0
+    t.bikes_allowed = 1
+    t.bikes_allowed = 2
+    with self.assertRaises(AssertionError):
+      t.bikes_allowed = 3
+    with self.assertRaises(AssertionError):
+      t.bikes_allowed = -1
+    self.assertEqual(t.bikes_allowed, 2)
+
 if __name__=='__main__':
   unittest.main()
