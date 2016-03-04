@@ -357,7 +357,7 @@ class ShapePoint(Base):
     shape_id = Column(Unicode, primary_key=True)
     shape_pt_lat = Column(Float)
     shape_pt_lon = Column(Float)
-    shape_pt_sequence = Column(Integer)
+    shape_pt_sequence = Column(Integer, primary_key=True) 
     shape_dist_traveled = Column(Float, nullable=True)
 
     trips = relationship("Trip", backref="shape_points")
