@@ -42,6 +42,12 @@ class TestSchedule(unittest.TestCase):
                      [(datetime.timedelta(0, 33600), datetime.timedelta(0, 33600)),
                       (datetime.timedelta(0, 39600), datetime.timedelta(0, 39600))])
 
+  def test_stop_translations(self):
+    self.assertEqual([(tr.lang,
+                      tr.translation) for tr in self.schedule.stops[0].translations],
+                      [(u'HE', 'אתר הנופש ערוץ הכבשן (דמו)'), (u'EN', 'Furnace Creek Resort (Demo)')])
+
+
   def test_agencies( self ):
     self.assertEqual( [ag.agency_id for ag in self.schedule.agencies],
       [u'DTA'] )
