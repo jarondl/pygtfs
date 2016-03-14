@@ -63,17 +63,28 @@ def append_feed(schedule, feed_filename, strip_fields=True,
     schedule.session.add(feed_entry)
     schedule.session.flush()
     feed_id = feed_entry.feed_id
-    
     for gtfs_class in gtfs_all:
         if gtfs_class not in gtfs_tables:
             continue
         gtfs_table = gtfs_tables[gtfs_class]
+
+        # Figure out if we need to filter any unsupported fields
+        fields_to_filter = []
+        for field in gtfs_table.header:
+            if field not in vars(gtfs_class).keys():
+                fields_to_filter.append(field)
+
         for i, record in enumerate(gtfs_table):
             if not record:
                 # Empty row.
                 continue
+
+            records_as_dict = record._asdict()
+            for field in fields_to_filter:
+                del records_as_dict[field]  # Filter out unsupported fields
+
             try:
-                instance = gtfs_class(feed_id = feed_id, **record._asdict())
+                instance = gtfs_class(feed_id=feed_id, **records_as_dict)
             except:
                 print("Failure while writing {0}".format(record))
                 raise
