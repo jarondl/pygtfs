@@ -10,7 +10,6 @@ from __future__ import division, absolute_import, print_function, unicode_litera
 
 
 import datetime
-import re
 
 import pytz
 from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, Index, and_
@@ -33,7 +32,7 @@ def _validate_time_delta(*field_names):
     @validates(*field_names)
     def time_delta(self, key, value):
         try:
-            (hours, minutes, seconds) = map(int, re.split(':', value))
+            (hours, minutes, seconds) = map(int, value.split(":"))
         except ValueError:
             return None
         return datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
