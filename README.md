@@ -1,6 +1,9 @@
 pygtfs
 ========
 
+[![Travis](https://img.shields.io/travis/jarondl/pygtfs/master.svg?style=flat-square)](https://travis-ci.org/jarondl/pygtfs)
+
+
 Overview
 --------
 
