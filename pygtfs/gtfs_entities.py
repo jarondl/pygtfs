@@ -124,7 +124,7 @@ class Agency(Base):
     __tablename__ = 'agency'
     _plural_name_ = 'agencies'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    agency_id = Column(Unicode, primary_key=True, default=u"None", index=True)
+    agency_id = Column(Unicode, primary_key=True, default="None", index=True)
     id = synonym('agency_id')
     agency_name = Column(Unicode)
     agency_url = Column(Unicode)
@@ -176,7 +176,7 @@ class Route(Base):
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     route_id = Column(Unicode, primary_key=True, index=True)
     id = synonym('route_id')
-    agency_id = Column(Unicode, default=u"None")
+    agency_id = Column(Unicode, default="None")
     route_short_name = Column(Unicode)
     route_long_name = Column(Unicode)
     route_desc = Column(Unicode, nullable=True)

@@ -19,7 +19,7 @@ class CSV(object):
     def __init__(self, rows, feedtype='CSVTuple'):
         self.header = list(six.next(rows))
         #deal with annoying unnecessary boms on utf-8
-        self.header[0] = self.header[0].lstrip(u"\ufeff")
+        self.header[0] = self.header[0].lstrip("\ufeff")
         self.Tuple = namedtuple(feedtype, self.header)
         self.rows = rows
 
