@@ -38,7 +38,7 @@ class Schedule:
 
     def drop_feed(self, feed_id):
         """ Delete a feed from a database by feed id"""
-        # the following does not cascade unfortunatly.
+        # the following does not cascade unfortunately.
         #self.session.query(Feed).filter(Feed.feed_id == feed_id).delete()
         feed = self.session.query(Feed).get(feed_id)
         self.session.delete(feed)
