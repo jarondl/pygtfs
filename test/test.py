@@ -12,7 +12,7 @@ import unittest
 class TestSchedule(unittest.TestCase):
   def setUp(self):
     self.schedule = Schedule(":memory:")
-    overwrite_feed(self.schedule, "test/data/sample-feed.zip" )
+    overwrite_feed(self.schedule, "test/data/sample_feed" )
 
   def test_routes( self ):
     self.assertEqual( self.schedule.routes[0].route_id, "AB" )
