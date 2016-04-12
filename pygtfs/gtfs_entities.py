@@ -324,7 +324,7 @@ class Service(Base):
 
 class ServiceException(Base):
     __tablename__ = 'calendar_dates'
-    _plural_name_ = 'service_excpetions'
+    _plural_name_ = 'service_exceptions'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     service_id = Column(Unicode, primary_key=True, index=True)
     id = synonym('service_id')
