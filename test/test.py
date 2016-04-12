@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
+
 import datetime
 
 from pygtfs import overwrite_feed
@@ -10,7 +12,7 @@ import unittest
 class TestSchedule(unittest.TestCase):
   def setUp(self):
     self.schedule = Schedule(":memory:")
-    overwrite_feed(self.schedule, "test/data/sample-feed.zip" )
+    overwrite_feed(self.schedule, "test/data/sample_feed" )
 
   def test_routes( self ):
     self.assertEqual( self.schedule.routes[0].route_id, "AB" )
@@ -21,13 +23,13 @@ class TestSchedule(unittest.TestCase):
 
   def test_stops( self ):
     self.assertEqual([st.stop_id for st in self.schedule.stops],
-                     [u'FUR_CREEK_RES', u'BEATTY_AIRPORT', u'BULLFROG',
-                      u'STAGECOACH', u'NADAV', u'NANAA', u'DADAN', u'EMSI',
-                      u'AMV'])
+                     ['FUR_CREEK_RES', 'BEATTY_AIRPORT', 'BULLFROG',
+                      'STAGECOACH', 'NADAV', 'NANAA', 'DADAN', 'EMSI',
+                      'AMV'])
 
   def test_route_trips( self ):
     self.assertEqual( [tr.trip_id for tr in self.schedule.routes[0].trips],
-      [u'AB1', u'AB2'] )
+      ['AB1', 'AB2'] )
 
   def test_trip_stop_times( self ):
     self.assertEqual( [(st.arrival_time if st.arrival_time else None,
@@ -37,7 +39,7 @@ class TestSchedule(unittest.TestCase):
 
   def test_service_trips( self ):
     self.assertEqual([tr.trip_id for tr in self.schedule.services[1].trips],
-                     [u'AAMV1', u'AAMV2', u'AAMV3', u'AAMV4'])
+                     ['AAMV1', 'AAMV2', 'AAMV3', 'AAMV4'])
 
   def test_stop_stop_times( self ):
     self.assertEqual([(st.arrival_time,st.departure_time) for st in self.schedule.stops[0].stop_times],
@@ -47,16 +49,16 @@ class TestSchedule(unittest.TestCase):
   def test_stop_translations(self):
     self.assertEqual([(tr.lang,
                       tr.translation) for tr in self.schedule.stops[0].translations],
-                      [(u'HE', 'אתר הנופש ערוץ הכבשן (דמו)'), (u'EN', 'Furnace Creek Resort (Demo)')])
+                      [('HE', 'אתר הנופש ערוץ הכבשן (דמו)'), ('EN', 'Furnace Creek Resort (Demo)')])
 
 
   def test_agencies( self ):
     self.assertEqual( [ag.agency_id for ag in self.schedule.agencies],
-      [u'DTA'] )
+      ['DTA'] )
 
   def test_agency_routes( self ):
     self.assertEqual([rt.route_id for rt in self.schedule.agencies[0].routes],
-                     [u'AAMV', u'AB', u'BFC', u'CITY', u'STBA'])
+                     ['AAMV', 'AB', 'BFC', 'CITY', 'STBA'])
 
   def test_trips_bikes_allowed(self):
     for t in self.schedule.trips:

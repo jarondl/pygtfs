@@ -6,19 +6,19 @@ when possible relations are taken into account, e.g. a :py:class:`Route` class
 has a `trips` attribute, with a list of trips for the specific route.
 """
 
-from __future__ import division, absolute_import, print_function, unicode_literals
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 
 import datetime
 
-import pytz
-from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, Index, and_
-from sqlalchemy.types import Unicode, Integer, Float, Boolean, Date, Interval, PickleType, TypeDecorator, Numeric
+from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, and_
+from sqlalchemy.types import (Unicode, Integer, Float, Boolean, Date, Interval,
+                              Numeric)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates, synonym
 
 Base = declarative_base()
-
 
 
 def _validate_date(*field_names):
@@ -35,14 +35,15 @@ def _validate_time_delta(*field_names):
             (hours, minutes, seconds) = map(int, value.split(":"))
         except ValueError:
             return None
-        return datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
+        return datetime.timedelta(hours=hours, minutes=minutes,
+                                  seconds=seconds)
     return time_delta
 
 
 def _validate_int_bool(*field_names):
     @validates(*field_names)
     def int_bool(self, key, value):
-        assert value in ["0","1"] , "value must be 0 or 1"
+        assert value in ("0", "1"), "value must be 0 or 1"
         return bool(int(value))
     return int_bool
 
@@ -61,6 +62,7 @@ def _validate_int_choice(int_choice, *field_names):
         return int_value
     return in_range
 
+
 def _validate_float_range(float_min, float_max, *field_names):
     @validates(*field_names)
     def in_range(self, key, value):
@@ -68,6 +70,7 @@ def _validate_float_range(float_min, float_max, *field_names):
         assert float_min <= float_value <= float_max, "value outside limits"
         return float_value
     return in_range
+
 
 def _validate_float_none(*field_names):
     @validates(*field_names)
@@ -78,8 +81,9 @@ def _validate_float_none(*field_names):
             if not value:
                 return None
             else:
-              raise
+                raise
     return is_float_none
+
 
 def create_foreign_keys(*key_names):
     """ Create foreign key constraints, always including feed_id,
@@ -87,8 +91,10 @@ def create_foreign_keys(*key_names):
     constraints = []
     for key in key_names:
         table, field = key.split('.')
-        constraints.append(  ForeignKeyConstraint(["feed_id", field],[table+".feed_id", key]))
+        constraints.append(ForeignKeyConstraint(["feed_id", field],
+                                                [table+".feed_id", key]))
     return tuple(constraints)
+
 
 class Feed(Base):
     __tablename__ = '_feed'
@@ -97,7 +103,6 @@ class Feed(Base):
     id = synonym('feed_id')
     feed_name = Column(Unicode)
     feed_append_date = Column(Date, nullable=True)
-
 
     # these relationships will allow us to delete entire feeds at once
     # by deleting a feed (because of 'cascading')
@@ -120,15 +125,16 @@ class Feed(Base):
     def __repr__(self):
         return '<Feed %s: %s>' % (self.feed_id, self.feed_name)
 
+
 class Agency(Base):
     __tablename__ = 'agency'
     _plural_name_ = 'agencies'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    agency_id = Column(Unicode, primary_key=True, default=u"None", index=True)
+    agency_id = Column(Unicode, primary_key=True, default="None", index=True)
     id = synonym('agency_id')
     agency_name = Column(Unicode)
     agency_url = Column(Unicode)
-    agency_timezone = Column(Unicode)  #### pytz.timezone????
+    agency_timezone = Column(Unicode)  # ### pytz.timezone????
     agency_lang = Column(Unicode, nullable=True)
     agency_phone = Column(Unicode, nullable=True)
     agency_fare_url = Column(Unicode, nullable=True)
@@ -137,6 +143,7 @@ class Agency(Base):
 
     def __repr__(self):
         return '<Agency %s: %s>' % (self.agency_id, self.agency_name)
+
 
 class Stop(Base):
     __tablename__ = 'stops'
@@ -158,17 +165,22 @@ class Stop(Base):
     platform_code = Column(Unicode, nullable=True)
 
     stop_times = relationship('StopTime', backref="stop")
-    transfers_to = relationship('Transfer', backref="stop_to", foreign_keys='Transfer.to_stop_id')
-    transfers_from = relationship('Transfer', backref="stop_from", foreign_keys='Transfer.from_stop_id')
-    translations = relationship('Translation', foreign_keys='Translation.trans_id')
+    transfers_to = relationship('Transfer', backref="stop_to",
+                                foreign_keys='Transfer.to_stop_id')
+    transfers_from = relationship('Transfer', backref="stop_from",
+                                  foreign_keys='Transfer.from_stop_id')
+    translations = relationship('Translation',
+                                foreign_keys='Translation.trans_id')
 
-
-    _validate_location = _validate_int_choice([None,0,1], 'location_type')
-    _validate_wheelchair = _validate_int_choice([0,1,2], 'wheelchair_boarding')
-    _validate_lon_lat = _validate_float_range(-180,180, 'stop_lon', 'stop_lat')
+    _validate_location = _validate_int_choice([None, 0, 1], 'location_type')
+    _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
+                                                'wheelchair_boarding')
+    _validate_lon_lat = _validate_float_range(-180, 180, 'stop_lon',
+                                              'stop_lat')
 
     def __repr__(self):
         return '<Stop %s: %s>' % (self.stop_id, self.stop_name)
+
 
 class Route(Base):
     __tablename__ = 'routes'
@@ -176,7 +188,7 @@ class Route(Base):
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     route_id = Column(Unicode, primary_key=True, index=True)
     id = synonym('route_id')
-    agency_id = Column(Unicode, default=u"None")
+    agency_id = Column(Unicode, default="None")
     route_short_name = Column(Unicode)
     route_long_name = Column(Unicode)
     route_desc = Column(Unicode, nullable=True)
@@ -219,9 +231,10 @@ class Trip(Base):
     # Need to implement this requirement, but not using a simple foreign key.
     __table_args__ = create_foreign_keys('routes.route_id', 'shapes.shape_id')
 
-    _validate_direction_id = _validate_int_choice([None,0,1], 'direction_id')
-    _validate_wheelchair = _validate_int_choice([0,1,2], 'wheelchair_accessible')
-    _validate_bikes = _validate_int_choice([0,1,2], 'bikes_allowed')
+    _validate_direction_id = _validate_int_choice([None, 0, 1], 'direction_id')
+    _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
+                                                'wheelchair_accessible')
+    _validate_bikes = _validate_int_choice([None, 0, 1, 2], 'bikes_allowed')
 
     def __repr__(self):
         return '<Trip %s>' % self.trip_id
@@ -234,7 +247,9 @@ class Translation(Base):
     trans_id = Column(Unicode, primary_key=True, index=True)
     lang = Column(Unicode, primary_key=True)
     translation = Column(Unicode)
-    __table_args__ = (ForeignKeyConstraint(["feed_id", 'trans_id'], ["stops.feed_id", "stops.stop_name"]),)
+    __table_args__ = (ForeignKeyConstraint(["feed_id", 'trans_id'],
+                                           ["stops.feed_id",
+                                            "stops.stop_name"]),)
 
     def __repr__(self):
         return '<Translation %s (to %s): %s>' % (self.trans_id, self.lang,
@@ -257,8 +272,11 @@ class StopTime(Base):
 
     __table_args__ = create_foreign_keys('trips.trip_id', 'stops.stop_id')
 
-    _validate_pickup_drop_off = _validate_int_choice([None,0,1,2,3], 'pickup_type', 'drop_off_type')
-    _validate_arrival_departure = _validate_time_delta('arrival_time', 'departure_time')
+    _validate_pickup_drop_off = _validate_int_choice([None, 0, 1, 2, 3],
+                                                     'pickup_type',
+                                                     'drop_off_type')
+    _validate_arrival_departure = _validate_time_delta('arrival_time',
+                                                       'departure_time')
 
     def __repr__(self):
         return '<StopTime %s: %d>' % (self.trip_id, self.stop_sequence)
@@ -281,16 +299,15 @@ class Service(Base):
     end_date = Column(Date)
 
     trips = relationship('Trip',
-        backref='service',
-        primaryjoin=and_(
-            service_id == Trip.service_id,
-            feed_id == Trip.feed_id,
-        ),
-        foreign_keys=[Trip.service_id, Trip.feed_id]
-    )
+                         backref='service',
+                         primaryjoin=and_(service_id == Trip.service_id,
+                                          feed_id == Trip.feed_id),
+                         foreign_keys=[Trip.service_id, Trip.feed_id]
+                         )
 
     _validate_bools = _validate_int_bool('monday', 'tuesday', 'wednesday',
-                                         'thursday', 'friday','saturday', 'sunday')
+                                         'thursday', 'friday', 'saturday',
+                                         'sunday')
     _validate_dates = _validate_date('start_date', 'end_date')
 
     def __repr__(self):
@@ -314,13 +331,11 @@ class ServiceException(Base):
     date = Column(Date, primary_key=True)
     exception_type = Column(Integer)
 
-    _validate_exception_type = _validate_int_choice([1,2], 'exception_type')
+    _validate_exception_type = _validate_int_choice([1, 2], 'exception_type')
     _validate_dates = _validate_date('date')
 
     def __repr__(self):
         return '<ServiceException %s: %s>' % (self.service_id, self.date)
-
-
 
 
 class Fare(Base):
@@ -332,12 +347,12 @@ class Fare(Base):
     price = Column(Numeric)
     currency_type = Column(Unicode)
     payment_method = Column(Integer)
-    transfers = Column(Integer, nullable=True) # it is required, but allowed to be empty
+    transfers = Column(Integer, nullable=True)  # required, empty is allowed
     transfer_duration = Column(Integer, nullable=True)
     agency_id = Column(Unicode, nullable=True)
 
-    _validate_payment_method = _validate_int_choice([0,1], 'payment_method')
-    _validate_transfers = _validate_int_choice([None, 0,1,2], 'transfers')
+    _validate_payment_method = _validate_int_choice([0, 1], 'payment_method')
+    _validate_transfers = _validate_int_choice([None, 0, 1, 2], 'transfers')
 
     def __repr__(self):
         return '<Fare %s>' % self.fare_id
@@ -356,7 +371,8 @@ class FareRule(Base):
     destination_id = Column(Unicode, nullable=True, primary_key=True)
     contains_id = Column(Unicode, nullable=True, primary_key=True)
 
-    __table_args__ = create_foreign_keys('fare_attributes.fare_id', 'routes.route_id')
+    __table_args__ = create_foreign_keys('fare_attributes.fare_id',
+                                         'routes.route_id')
 
     def __repr__(self):
         return '<FareRule %s: %s %s %s %s>' % (self.fare_id,
@@ -373,12 +389,13 @@ class ShapePoint(Base):
     shape_id = Column(Unicode, primary_key=True)
     shape_pt_lat = Column(Float)
     shape_pt_lon = Column(Float)
-    shape_pt_sequence = Column(Integer, primary_key=True) 
+    shape_pt_sequence = Column(Integer, primary_key=True)
     shape_dist_traveled = Column(Float, nullable=True)
 
     trips = relationship("Trip", backref="shape_points")
 
-    _validate_lon_lat = _validate_float_range(-180,180, 'shape_pt_lon', 'shape_pt_lat')
+    _validate_lon_lat = _validate_float_range(-180, 180,
+                                              'shape_pt_lon', 'shape_pt_lat')
     _validate_shape_dist_traveled = _validate_float_none('shape_dist_traveled')
 
     def __repr__(self):
@@ -397,11 +414,12 @@ class Frequency(Base):
 
     __table_args__ = create_foreign_keys('trips.trip_id')
 
-    _validate_exact_times = _validate_int_choice([None,0,1], 'exact_times')
+    _validate_exact_times = _validate_int_choice([None, 0, 1], 'exact_times')
     _validate_deltas = _validate_time_delta('start_time', 'end_time')
 
     def __repr__(self):
-        return '<Frequency %s %s-%s>' % (self.trip_id, self.start_time, self.end_time)
+        return '<Frequency %s %s-%s>' % (self.trip_id, self.start_time,
+                                         self.end_time)
 
 
 class Transfer(Base):
@@ -410,7 +428,7 @@ class Transfer(Base):
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     from_stop_id = Column(Unicode, primary_key=True)
     to_stop_id = Column(Unicode, primary_key=True)
-    transfer_type = Column(Integer, nullable=True) # required but empty is allowed
+    transfer_type = Column(Integer, nullable=True)  # required; allowed empty
     min_transfer_time = Column(Integer, nullable=True)
 
     __table_args__ = (
@@ -422,11 +440,11 @@ class Transfer(Base):
         ),
     )
 
-    _validate_transfer_type = _validate_int_choice([None,0,1,2,3], 'transfer_type')
+    _validate_transfer_type = _validate_int_choice([None, 0, 1, 2, 3],
+                                                   'transfer_type')
 
     def __repr__(self):
         return "<Transfer %s-%s>" % (self.from_stop_id, self.to_stop_id)
-
 
 
 class FeedInfo(Base):
@@ -446,7 +464,7 @@ class FeedInfo(Base):
         return "<FeedInfo %s>" % self.feed_publisher_name
 
 
-# a feed can skip Service (calendar) if it has ServiceException (calendar_dates)
+# a feed can skip Service (calendar) if it has ServiceException(calendar_dates)
 
 gtfs_required = [Agency, Stop, Route, Trip, StopTime]
 gtfs_calendar = [Service, ServiceException]

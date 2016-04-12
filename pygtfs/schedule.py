@@ -1,9 +1,11 @@
-from __future__ import division, absolute_import, print_function, unicode_literals
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import sqlalchemy
 import sqlalchemy.orm
 
 from .gtfs_entities import gtfs_all, Feed, Base
+
 
 class Schedule:
     """Represents the full database.
@@ -12,17 +14,17 @@ class Schedule:
     entire dataset. Most of the properties come straight from the gtfs
     reference. Two of them were renamed: calendar is called `services`, and
     calendar_dates `service_exceptions`. One addition is the `feeds` table,
-    which is here to support more than one feed in a database. 
+    which is here to support more than one feed in a database.
 
     Each of the properties is a list created upon access by sqlalchemy. Then,
-    each element of the list as attributes following the gtfs reference. In 
+    each element of the list as attributes following the gtfs reference. In
     addition, if they are related to another table, this can also be accessed
     by attribute.
 
     :param db_conection: Either a sqlalchemy database url or a filename to be used with sqlite.
 
     """
-    
+
     def __init__(self, db_connection):
         self.db_connection = db_connection
         self.db_filename = None
@@ -33,25 +35,26 @@ class Schedule:
         self.engine = sqlalchemy.create_engine(self.db_connection, echo=False)
         Session = sqlalchemy.orm.sessionmaker(bind=self.engine)
         self.session = Session()
-        Base.metadata.create_all(self.engine) 
-
+        Base.metadata.create_all(self.engine)
 
     def drop_feed(self, feed_id):
         """ Delete a feed from a database by feed id"""
         # the following does not cascade unfortunatly.
-        #self.session.query(Feed).filter(Feed.feed_id == feed_id).delete()
+        # self.session.query(Feed).filter(Feed.feed_id == feed_id).delete()
         feed = self.session.query(Feed).get(feed_id)
         self.session.delete(feed)
         self.session.commit()
+
 
 def _meta_query_all(entity, docstring=None):
     def _query_all(instance_self):
         """ A list generated on access """
         return instance_self.session.query(entity).all()
-    
+
     if docstring is not None:
         _query_all.__doc__ = docstring
     return property(_query_all)
+
 
 def _meta_query_by_id(entity, docstring=None):
     def _query_by_id(self, id):

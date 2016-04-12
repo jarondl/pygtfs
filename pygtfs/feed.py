@@ -1,25 +1,27 @@
-from __future__ import division, absolute_import, print_function, unicode_literals
+from __future__ import (division, absolute_import, print_function,
+                        unicode_literals)
 
 import os
 import io
 import csv
 
-from codecs import iterdecode
 from collections import namedtuple
 from zipfile import ZipFile
 
 import six
 
+
 def _row_stripper(row):
     return (cell.strip() for cell in row)
+
 
 class CSV(object):
     """A CSV file."""
 
     def __init__(self, rows, feedtype='CSVTuple'):
         self.header = list(six.next(rows))
-        #deal with annoying unnecessary boms on utf-8
-        self.header[0] = self.header[0].lstrip(u"\ufeff")
+        # deal with annoying unnecessary boms on utf-8
+        self.header[0] = self.header[0].lstrip("\ufeff")
         self.Tuple = namedtuple(feedtype, self.header)
         self.rows = rows
 
@@ -41,7 +43,7 @@ class Feed(object):
     or loose in a folder."""
 
     def __init__(self, filename, strip_fields=True):
-        self.filename = filename 
+        self.filename = filename
         self.feed_name = derive_feed_name(filename)
         self.zf = None
         self.strip_fields = strip_fields
@@ -51,7 +53,7 @@ class Feed(object):
             self.reader = self.python2_reader
         else:
             self.reader = self.python3_reader
-    
+
     def __repr__(self):
         return '<Feed %s>' % self.filename
 
@@ -62,7 +64,8 @@ class Feed(object):
             except IOError:
                 raise IOError('%s is not present in feed' % filename)
         else:
-            binary_file_handle = open(os.path.join(self.filename, filename), "rb")
+            binary_file_handle = open(os.path.join(self.filename, filename),
+                                      "rb")
         reader = csv.reader(binary_file_handle)
         for row in reader:
             yield [six.text_type(x, 'utf-8') for x in row]
@@ -70,11 +73,13 @@ class Feed(object):
     def python3_reader(self, filename):
         if self.zf:
             try:
-                text_file_handle = io.TextIOWrapper(self.zf.open(filename, "r"), encoding="utf-8")
+                text_file_handle = io.TextIOWrapper(
+                    self.zf.open(filename, "r"), encoding="utf-8")
             except IOError:
                 raise IOError('%s is not present in feed' % filename)
         else:
-            text_file_handle = open(os.path.join(self.filename, filename), "r", encoding="utf-8")
+            text_file_handle = open(os.path.join(self.filename, filename), "r",
+                                    encoding="utf-8")
         return csv.reader(text_file_handle)
 
     def read_table(self, filename):
@@ -82,7 +87,8 @@ class Feed(object):
             rows = (_row_stripper(row) for row in self.reader(filename))
         else:
             rows = self.reader(filename)
-        feedtype = filename.rsplit('/')[-1].rsplit('.')[0].title().replace('_', '')
+        feedtype = filename.rsplit('/')[-1].rsplit('.')[0].title().replace('_',
+                                                                           '')
         return CSV(feedtype=feedtype, rows=rows)
 
 
