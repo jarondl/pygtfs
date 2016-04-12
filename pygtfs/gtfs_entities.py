@@ -11,9 +11,8 @@ from __future__ import division, absolute_import, print_function, unicode_litera
 
 import datetime
 
-import pytz
-from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, Index, and_
-from sqlalchemy.types import Unicode, Integer, Float, Boolean, Date, Interval, PickleType, TypeDecorator, Numeric
+from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, and_
+from sqlalchemy.types import Unicode, Integer, Float, Boolean, Date, Interval, Numeric
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates, synonym
 
@@ -162,10 +161,11 @@ class Stop(Base):
     transfers_from = relationship('Transfer', backref="stop_from", foreign_keys='Transfer.from_stop_id')
     translations = relationship('Translation', foreign_keys='Translation.trans_id')
 
-
-    _validate_location = _validate_int_choice([None,0,1], 'location_type')
-    _validate_wheelchair = _validate_int_choice([0,1,2], 'wheelchair_boarding')
-    _validate_lon_lat = _validate_float_range(-180,180, 'stop_lon', 'stop_lat')
+    _validate_location = _validate_int_choice([None, 0, 1], 'location_type')
+    _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
+                                                'wheelchair_boarding')
+    _validate_lon_lat = _validate_float_range(-180, 180, 'stop_lon',
+                                              'stop_lat')
 
     def __repr__(self):
         return '<Stop %s: %s>' % (self.stop_id, self.stop_name)
@@ -219,9 +219,10 @@ class Trip(Base):
     # Need to implement this requirement, but not using a simple foreign key.
     __table_args__ = create_foreign_keys('routes.route_id', 'shapes.shape_id')
 
-    _validate_direction_id = _validate_int_choice([None,0,1], 'direction_id')
-    _validate_wheelchair = _validate_int_choice([0,1,2], 'wheelchair_accessible')
-    _validate_bikes = _validate_int_choice([0,1,2], 'bikes_allowed')
+    _validate_direction_id = _validate_int_choice([None, 0, 1], 'direction_id')
+    _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
+                                                'wheelchair_accessible')
+    _validate_bikes = _validate_int_choice([None, 0, 1, 2], 'bikes_allowed')
 
     def __repr__(self):
         return '<Trip %s>' % self.trip_id
