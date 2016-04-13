@@ -2,12 +2,11 @@ pygtfs
 ========
 
 [![Travis](https://img.shields.io/travis/jarondl/pygtfs/master.svg?style=flat-square)](https://travis-ci.org/jarondl/pygtfs)
+[![PyPI](https://img.shields.io/pypi/v/pygtfs.svg)](https://pypi.python.org/pypi/pygtfs)
 
 
 Overview
 --------
-
-Latest version: 0.1.2
 
 pygtfs is a library that models information stored in Google's
 [General Transit Feed Specification (GTFS)](https://developers.google.com/transit/)
