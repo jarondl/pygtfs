@@ -138,6 +138,7 @@ class Agency(Base):
     agency_lang = Column(Unicode, nullable=True)
     agency_phone = Column(Unicode, nullable=True)
     agency_fare_url = Column(Unicode, nullable=True)
+    agency_email = Column(Unicode, nullable=True)
 
     routes = relationship("Route", backref="agency")
 
@@ -269,6 +270,7 @@ class StopTime(Base):
     pickup_type = Column(Integer)
     drop_off_type = Column(Integer)
     shape_dist_traveled = Column(Integer, nullable=True)
+    timepoint = Column(Integer, nullable=True)
 
     __table_args__ = create_foreign_keys('trips.trip_id', 'stops.stop_id')
 
@@ -277,6 +279,7 @@ class StopTime(Base):
                                                      'drop_off_type')
     _validate_arrival_departure = _validate_time_delta('arrival_time',
                                                        'departure_time')
+    _validate_timepoint = _validate_int_choice([None, 0, 1], 'timepoint')
 
     def __repr__(self):
         return '<StopTime %s: %d>' % (self.trip_id, self.stop_sequence)
