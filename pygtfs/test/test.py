@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import datetime
+import os.path
 
 from pygtfs import overwrite_feed
 from pygtfs import Schedule
@@ -12,7 +13,9 @@ import unittest
 class TestSchedule(unittest.TestCase):
   def setUp(self):
     self.schedule = Schedule(":memory:")
-    overwrite_feed(self.schedule, "test/data/sample_feed" )
+    data_location = os.path.join(os.path.dirname(__file__),
+                                 "data", "sample_feed")
+    overwrite_feed(self.schedule, data_location)
 
   def test_routes( self ):
     self.assertEqual( self.schedule.routes[0].route_id, "AB" )

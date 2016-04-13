@@ -3,11 +3,13 @@ sudo: false
 python:
   - "2.6"
   - "2.7"
+  - "3.2"
   - "3.3"
   - "3.4"
+  - "3.5"
   - "pypy"
   - "pypy3"
 install:
   - pip install six sqlalchemy pytz docopt
 script:
-  - python -m unittest test.test
+  - python setup.py test
