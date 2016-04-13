@@ -138,6 +138,7 @@ class Agency(Base):
     agency_lang = Column(Unicode, nullable=True)
     agency_phone = Column(Unicode, nullable=True)
     agency_fare_url = Column(Unicode, nullable=True)
+    agency_email = Column(Unicode, nullable=True)
 
     routes = relationship("Route", backref="agency")
 
