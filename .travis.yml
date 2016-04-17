@@ -10,6 +10,7 @@ python:
   - "pypy"
   - "pypy3"
 install:
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
   - pip install six sqlalchemy pytz docopt
 script:
   - python setup.py test
