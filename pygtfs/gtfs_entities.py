@@ -181,7 +181,7 @@ class Stop(Base):
     translations = relationship('Translation',
                                 foreign_keys='Translation.trans_id')
 
-    _validate_location = _validate_int_choice([None, 0, 1], 'location_type')
+    _validate_location = _validate_int_choice([None, 0, 1, 2], 'location_type')
     _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
                                                 'wheelchair_boarding')
     _validate_lon_lat = _validate_float_range(-180, 180, 'stop_lon',
@@ -363,7 +363,7 @@ class Fare(Base):
     agency_id = Column(Unicode, nullable=True)
 
     _validate_payment_method = _validate_int_choice([0, 1], 'payment_method')
-    _validate_transfers = _validate_int_choice([None, 0, 1, 2], 'transfers')
+    _validate_transfers = _validate_int_choice([None, 0, 1, 2, 3, 4, 5], 'transfers')
 
     def __repr__(self):
         return '<Fare %s>' % self.fare_id
