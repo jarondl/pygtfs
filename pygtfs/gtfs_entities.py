@@ -18,6 +18,8 @@ from sqlalchemy.types import (Unicode, Integer, Float, Boolean, Date, Interval,
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates, synonym
 
+from .exceptions import PygtfsValidationError, PygtfsConversionError
+
 Base = declarative_base()
 
 
@@ -31,10 +33,9 @@ def _validate_date(*field_names):
 def _validate_time_delta(*field_names):
     @validates(*field_names)
     def time_delta(self, key, value):
-        try:
-            (hours, minutes, seconds) = map(int, value.split(":"))
-        except ValueError:
+        if value is None or value == "":
             return None
+        (hours, minutes, seconds) = map(int, value.split(":"))
         return datetime.timedelta(hours=hours, minutes=minutes,
                                   seconds=seconds)
     return time_delta
@@ -43,22 +44,26 @@ def _validate_time_delta(*field_names):
 def _validate_int_bool(*field_names):
     @validates(*field_names)
     def int_bool(self, key, value):
-        assert value in ("0", "1"), "value must be 0 or 1"
-        return bool(int(value))
+        if value not in ("0", "1"):
+            raise PygtfsValidationError("{0} must be 0 or 1, "
+                                        "was {1}".format(key, value))
+        return value == "1"
     return int_bool
 
 
 def _validate_int_choice(int_choice, *field_names):
     @validates(*field_names)
     def in_range(self, key, value):
-        if ((value is None) or (value == '')):
+        if value is None or value == "":
             if (None in int_choice):
                 return None
             else:
-                raise ValueError("Empty value not allowed in {0}".format(key))
+                raise PygtfsValidationError("Empty value not allowed in {0}".format(key))
         else:
             int_value = int(value)
-        assert int_value in int_choice, "value outside limits"
+        if int_value not in int_choice:
+            raise PygtfsValidationError(
+                "{0} must be in range {1}, was {2}".format(key, int_choice, value))
         return int_value
     return in_range
 
@@ -67,7 +72,10 @@ def _validate_float_range(float_min, float_max, *field_names):
     @validates(*field_names)
     def in_range(self, key, value):
         float_value = float(value)
-        assert float_min <= float_value <= float_max, "value outside limits"
+        if not (float_min <= float_value <= float_max):
+            raise PygtfsValidationError(
+                "{0} must be in range [{1}, {2}],"
+                " was {2}".format(key, float_min, float_max, value))
         return float_value
     return in_range
 
@@ -78,7 +86,7 @@ def _validate_float_none(*field_names):
         try:
             return float(value)
         except ValueError:
-            if not value:
+            if value is None or value == "":
                 return None
             else:
                 raise
@@ -173,7 +181,7 @@ class Stop(Base):
     translations = relationship('Translation',
                                 foreign_keys='Translation.trans_id')
 
-    _validate_location = _validate_int_choice([None, 0, 1], 'location_type')
+    _validate_location = _validate_int_choice([None, 0, 1, 2], 'location_type')
     _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
                                                 'wheelchair_boarding')
     _validate_lon_lat = _validate_float_range(-180, 180, 'stop_lon',
@@ -355,7 +363,7 @@ class Fare(Base):
     agency_id = Column(Unicode, nullable=True)
 
     _validate_payment_method = _validate_int_choice([0, 1], 'payment_method')
-    _validate_transfers = _validate_int_choice([None, 0, 1, 2], 'transfers')
+    _validate_transfers = _validate_int_choice([None, 0, 1, 2, 3, 4, 5], 'transfers')
 
     def __repr__(self):
         return '<Fare %s>' % self.fare_id

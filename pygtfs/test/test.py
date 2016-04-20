@@ -73,9 +73,9 @@ class TestSchedule(unittest.TestCase):
         t.bikes_allowed = 0
         t.bikes_allowed = 1
         t.bikes_allowed = 2
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             t.bikes_allowed = 3
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             t.bikes_allowed = -1
         self.assertEqual(t.bikes_allowed, 2)
 
