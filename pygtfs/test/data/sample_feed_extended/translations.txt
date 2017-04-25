@@ -1,0 +1,3 @@
+trans_id,lang,translation
+Furnace Creek Resort (Demo),HE,אתר הנופש ערוץ הכבשן (דמו)
+Furnace Creek Resort (Demo),EN,Furnace Creek Resort (Demo)

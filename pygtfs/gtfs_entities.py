@@ -9,16 +9,15 @@ has a `trips` attribute, with a list of trips for the specific route.
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
-
 import datetime
 
 from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, and_
-from sqlalchemy.types import (Unicode, Integer, Float, Boolean, Date, Interval,
-                              Numeric)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates, synonym
+from sqlalchemy.types import (Unicode, Integer, Float, Boolean, Date, Interval,
+                              Numeric)
 
-from .exceptions import PygtfsValidationError, PygtfsConversionError
+from .exceptions import PygtfsValidationError
 
 Base = declarative_base()
 
@@ -27,6 +26,7 @@ def _validate_date(*field_names):
     @validates(*field_names)
     def make_date(self, key, value):
         return datetime.datetime.strptime(value, '%Y%m%d').date()
+
     return make_date
 
 
@@ -38,6 +38,7 @@ def _validate_time_delta(*field_names):
         (hours, minutes, seconds) = map(int, value.split(":"))
         return datetime.timedelta(hours=hours, minutes=minutes,
                                   seconds=seconds)
+
     return time_delta
 
 
@@ -48,6 +49,7 @@ def _validate_int_bool(*field_names):
             raise PygtfsValidationError("{0} must be 0 or 1, "
                                         "was {1}".format(key, value))
         return value == "1"
+
     return int_bool
 
 
@@ -65,6 +67,7 @@ def _validate_int_choice(int_choice, *field_names):
             raise PygtfsValidationError(
                 "{0} must be in range {1}, was {2}".format(key, int_choice, value))
         return int_value
+
     return in_range
 
 
@@ -77,6 +80,7 @@ def _validate_float_range(float_min, float_max, *field_names):
                 "{0} must be in range [{1}, {2}],"
                 " was {2}".format(key, float_min, float_max, value))
         return float_value
+
     return in_range
 
 
@@ -90,6 +94,7 @@ def _validate_float_none(*field_names):
                 return None
             else:
                 raise
+
     return is_float_none
 
 
@@ -100,7 +105,7 @@ def create_foreign_keys(*key_names):
     for key in key_names:
         table, field = key.split('.')
         constraints.append(ForeignKeyConstraint(["feed_id", field],
-                                                [table+".feed_id", key]))
+                                                [table + ".feed_id", key]))
     return tuple(constraints)
 
 
@@ -211,7 +216,31 @@ class Route(Base):
     trips = relationship("Trip", backref="route")
     fare_rules = relationship("FareRule", backref="route")
 
-    _validate_route_type = _validate_int_choice(range(8), 'route_type')
+    valid_route_types = range(8)
+    # https://developers.google.com/transit/gtfs/reference/extended-route-types
+    valid_extended_route_types = [
+        range(8),
+        range(100, 118),
+        range(200, 210),
+        [300],
+        range(400, 406),
+        [500],
+        [600],
+        range(700, 717),
+        [800],
+        range(900, 907),
+        range(1000, 1022),
+        range(1100, 1115),
+        [1200],
+        range(1300, 1308),
+        range(1400, 1403),
+        range(1500, 1508),
+        range(1600, 1605),
+        range(1700, 1703)
+    ]
+    # flatten the list of lists to a list
+    valid_extended_route_types = [item for sublist in valid_extended_route_types for item in sublist]
+    _validate_route_type = _validate_int_choice(valid_extended_route_types, 'route_type')
 
     def __repr__(self):
         return '<Route %s: %s>' % (self.route_id, self.route_short_name)
