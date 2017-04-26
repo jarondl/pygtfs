@@ -64,7 +64,7 @@ class TestSchedule(unittest.TestCase):
 
     def test_agency_routes(self):
         self.assertEqual([rt.route_id for rt in self.schedule.agencies[0].routes],
-                         ['AAMV', 'AB', 'BFC', 'CITY', 'STBA'])
+                         ['AAMV', 'AB', 'BFC', 'CITY', 'EXT', 'STBA'])
 
     def test_trips_bikes_allowed(self):
         for t in self.schedule.trips:

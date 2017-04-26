@@ -8,4 +8,5 @@ data/*
 docs/_build
 .project
 .pydevproject
+.idea/*
 pygtfs/_version.py
