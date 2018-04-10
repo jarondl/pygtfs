@@ -64,9 +64,28 @@ def _meta_query_by_id(entity, docstring=None):
         _query_by_id.__doc__ = docstring
     return _query_by_id
 
+
+def _meta_query_raw(entity, docstring=None):
+    def _query_raw(instance_self):
+        """
+            A raw sqlalchemy query object that the user can then manipulate
+            manually
+        """
+        return instance_self.session.query(entity)
+
+    if docstring is not None:
+        _query_raw.__doc__ = docstring
+    return property(_query_raw)
+
+
 for entity in (gtfs_all + [Feed]):
     entity_doc = "A list of :py:class:`pygtfs.gtfs_entities.{0}` objects".format(entity.__name__)
+    entity_raw_doc = ("A :py:class:`sqlalchemy.orm.Query` object to fetch "
+                      ":py:class:`pygtfs.gtfs_entities.{0}` objects"
+                      .format(entity.__name__))
     entity_by_id_doc = "A list of :py:class:`pygtfs.gtfs_entities.{0}` objects with matching id".format(entity.__name__)
     setattr(Schedule, entity._plural_name_, _meta_query_all(entity, entity_doc))
+    setattr(Schedule, entity._plural_name_ + "_query",
+            _meta_query_raw(entity, entity_raw_doc))
     if hasattr(entity, 'id'):
         setattr(Schedule, entity._plural_name_ + "_by_id", _meta_query_by_id(entity, entity_by_id_doc))    
