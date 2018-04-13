@@ -13,6 +13,8 @@ except ImportError:
 from pygtfs import overwrite_feed
 from pygtfs import Schedule
 
+from sqlalchemy.orm import Query
+
 
 class TestSchedule(unittest.TestCase):
     def setUp(self):
@@ -78,6 +80,17 @@ class TestSchedule(unittest.TestCase):
         with self.assertRaises(ValueError):
             t.bikes_allowed = -1
         self.assertEqual(t.bikes_allowed, 2)
+    
+    def test_query_methods(self):
+        """
+            Test that the object query getters return
+            :py:class:`sqlalchemy.orm.Query` objects
+        """
+        # Ideally assertIsInstance would be used, but this is not Python 2.6
+        # compatile
+        self.assertEqual(isinstance(self.schedule.agencies_query, Query),
+                         True)
+
 
 if __name__ == '__main__':
     unittest.main()
