@@ -7,7 +7,7 @@ import sys
 import six
 
 from .gtfs_entities import (Feed, Service, ServiceException, gtfs_required,
-                            gtfs_all)
+                            gtfs_calendar, gtfs_all)
 from . import feed
 
 
@@ -53,12 +53,13 @@ def append_feed(schedule, feed_filename, strip_fields=True,
         gtfs_filename = gtfs_class.__tablename__ + '.txt'
 
         try:
-            gtfs_tables[gtfs_class] = fd.read_table(gtfs_filename)
+            gtfs_tables[gtfs_class] = fd.read_table(gtfs_filename, gtfs_class.__table__.columns)
         except (KeyError, IOError):
             if gtfs_class in gtfs_required:
                 raise IOError('Error: could not find %s' % gtfs_filename)
 
-    assert (Service in gtfs_tables) or (ServiceException in gtfs_tables), "Must have Calendar.txt or Calendar_dates.txt"
+    if Service not in gtfs_tables and ServiceException not in gtfs_tables:
+        raise PygtfsException('Must have Calendar.txt or Calendar_dates.txt')
 
     # create new feed
     feed_entry = Feed(feed_name=fd.feed_name, feed_append_date=date.today())
@@ -70,23 +71,14 @@ def append_feed(schedule, feed_filename, strip_fields=True,
             continue
         gtfs_table = gtfs_tables[gtfs_class]
 
-        # Figure out if we need to filter any unsupported fields
-        fields_to_filter = []
-        for field in gtfs_table.header:
-            if field not in vars(gtfs_class).keys():
-                fields_to_filter.append(field)
 
         for i, record in enumerate(gtfs_table):
             if not record:
                 # Empty row.
                 continue
 
-            records_as_dict = record._asdict()
-            for field in fields_to_filter:
-                del records_as_dict[field]  # Filter out unsupported fields
-
             try:
-                instance = gtfs_class(feed_id=feed_id, **records_as_dict)
+                instance = gtfs_class(feed_id=feed_id, **record._asdict())
             except:
                 print("Failure while writing {0}".format(record))
                 raise
