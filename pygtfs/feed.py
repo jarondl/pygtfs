@@ -18,11 +18,18 @@ def _row_stripper(row):
 class CSV(object):
     """A CSV file."""
 
-    def __init__(self, rows, feedtype='CSVTuple'):
-        self.header = list(six.next(rows))
+    def __init__(self, rows, feedtype='CSVTuple', columns=None):
+        header = list(six.next(rows))
         # deal with annoying unnecessary boms on utf-8
-        self.header[0] = self.header[0].lstrip("\ufeff")
-        self.Tuple = namedtuple(feedtype, self.header)
+        header[0] = header[0].lstrip("\ufeff")
+        if not columns:
+            raise ValueError('missing columns argument')
+        # we need to filter fields that exist in the csv but not our model.
+        self.cols = tuple(i for i, h in enumerate(header) if h in columns)
+        if len(self.cols) == len(header):
+            # There is no actual filtering, we can skip it
+            self.cols = None
+        self.Tuple = namedtuple(feedtype, self._pick_columns(header))
         self.rows = rows
 
     def __repr__(self):
@@ -34,8 +41,15 @@ class CSV(object):
     def __next__(self):
         n = tuple(six.next(self.rows))
         if n:
-            return self.Tuple._make(n)
+            return self.Tuple._make(self._pick_columns(n))
     next = __next__  # python 2 compatible
+
+    def _pick_columns(self, row):
+        if self.cols:
+            return (row[x] for x in self.cols)
+        return row
+
+
 
 
 class Feed(object):
@@ -82,14 +96,14 @@ class Feed(object):
                                     encoding="utf-8")
         return csv.reader(text_file_handle)
 
-    def read_table(self, filename):
+    def read_table(self, filename, columns):
         if self.strip_fields:
             rows = (_row_stripper(row) for row in self.reader(filename))
         else:
             rows = self.reader(filename)
         feedtype = filename.rsplit('/')[-1].rsplit('.')[0].title().replace('_',
                                                                            '')
-        return CSV(feedtype=feedtype, rows=rows)
+        return CSV(feedtype=feedtype, rows=rows, columns=columns)
 
 
 def derive_feed_name(filename):

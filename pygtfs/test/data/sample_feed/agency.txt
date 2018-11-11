@@ -1,2 +1,2 @@
-agency_id,agency_name,agency_url,agency_timezone
-DTA,Demo Transit Authority,http://google.com,America/Los_Angeles
+agency_id,agency_name,agency_url,agency_timezone,nonexistent_column
+DTA,Demo Transit Authority,http://google.com,America/Los_Angeles,value
