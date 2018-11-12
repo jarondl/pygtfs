@@ -1,6 +1,0 @@
-SQLAlchemy
-setuptools_scm
-docopt
-pytz
-six
-pygtfs
