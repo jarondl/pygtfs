@@ -240,6 +240,26 @@ class Route(Base):
         return '<Route %s: %s>' % (self.route_id, self.route_short_name)
 
 
+class ShapePoint(Base):
+    __tablename__ = 'shapes'
+    _plural_name_ = 'shapes'
+    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
+    shape_id = Column(Unicode, primary_key=True)
+    shape_pt_lat = Column(Float)
+    shape_pt_lon = Column(Float)
+    shape_pt_sequence = Column(Integer, primary_key=True)
+    shape_dist_traveled = Column(Float, nullable=True)
+
+    trips = relationship("Trip", backref="shape_points")
+
+    _validate_lon_lat = _validate_float_range(-180, 180,
+                                              'shape_pt_lon', 'shape_pt_lat')
+    _validate_shape_dist_traveled = _validate_float_none('shape_dist_traveled')
+
+    def __repr__(self):
+        return '<ShapePoint %s>' % self.shape_id
+
+
 class Trip(Base):
     __tablename__ = 'trips'
     _plural_name_ = 'trips'
@@ -414,26 +434,6 @@ class FareRule(Base):
                                                self.origin_id,
                                                self.destination_id,
                                                self.contains_id)
-
-
-class ShapePoint(Base):
-    __tablename__ = 'shapes'
-    _plural_name_ = 'shapes'
-    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    shape_id = Column(Unicode, primary_key=True)
-    shape_pt_lat = Column(Float)
-    shape_pt_lon = Column(Float)
-    shape_pt_sequence = Column(Integer, primary_key=True)
-    shape_dist_traveled = Column(Float, nullable=True)
-
-    trips = relationship("Trip", backref="shape_points")
-
-    _validate_lon_lat = _validate_float_range(-180, 180,
-                                              'shape_pt_lon', 'shape_pt_lat')
-    _validate_shape_dist_traveled = _validate_float_none('shape_dist_traveled')
-
-    def __repr__(self):
-        return '<ShapePoint %s>' % self.shape_id
 
 
 class Frequency(Base):
