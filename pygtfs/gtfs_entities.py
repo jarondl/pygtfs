@@ -16,7 +16,7 @@ from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, and_
 from sqlalchemy.types import (Unicode, Integer, Float, Boolean, Date, Interval,
                               Numeric)
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, validates, synonym
+from sqlalchemy.orm import relationship, validates, synonym, foreign
 
 from .exceptions import PygtfsValidationError
 
@@ -93,17 +93,6 @@ def _validate_float_none(*field_names):
     return is_float_none
 
 
-def create_foreign_keys(*key_names):
-    """ Create foreign key constraints, always including feed_id,
-        and relying on convention that key name is the same"""
-    constraints = []
-    for key in key_names:
-        table, field = key.split('.')
-        constraints.append(ForeignKeyConstraint(["feed_id", field],
-                                                [table+".feed_id", key]))
-    return tuple(constraints)
-
-
 class Feed(Base):
     __tablename__ = '_feed'
     _plural_name_ = 'feeds'
@@ -148,8 +137,6 @@ class Agency(Base):
     agency_fare_url = Column(Unicode, nullable=True)
     agency_email = Column(Unicode, nullable=True)
 
-    routes = relationship("Route", backref="agency")
-
     def __repr__(self):
         return '<Agency %s: %s>' % (self.agency_id, self.agency_name)
 
@@ -173,13 +160,7 @@ class Stop(Base):
     wheelchair_boarding = Column(Integer, nullable=True)
     platform_code = Column(Unicode, nullable=True)
 
-    stop_times = relationship('StopTime', backref="stop")
-    transfers_to = relationship('Transfer', backref="stop_to",
-                                foreign_keys='Transfer.to_stop_id')
-    transfers_from = relationship('Transfer', backref="stop_from",
-                                  foreign_keys='Transfer.from_stop_id')
-    translations = relationship('Translation',
-                                foreign_keys='Translation.trans_id')
+    translations = relationship('Translation', foreign_keys='Translation.trans_id')
 
     _validate_location = _validate_int_choice([None, 0, 1, 2], 'location_type')
     _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
@@ -206,10 +187,9 @@ class Route(Base):
     route_color = Column(Unicode, nullable=True)
     route_text_color = Column(Unicode, nullable=True)
 
-    __table_args__ = create_foreign_keys('agency.agency_id')
-
-    trips = relationship("Trip", backref="route")
-    fare_rules = relationship("FareRule", backref="route")
+    agency = relationship(Agency, backref="routes",
+            primaryjoin=and_(Agency.agency_id==foreign(agency_id),
+                             Agency.feed_id==feed_id))
 
     # https://developers.google.com/transit/gtfs/reference/extended-route-types
     valid_extended_route_types = [
@@ -240,6 +220,24 @@ class Route(Base):
         return '<Route %s: %s>' % (self.route_id, self.route_short_name)
 
 
+class ShapePoint(Base):
+    __tablename__ = 'shapes'
+    _plural_name_ = 'shapes'
+    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
+    shape_id = Column(Unicode, primary_key=True)
+    shape_pt_lat = Column(Float)
+    shape_pt_lon = Column(Float)
+    shape_pt_sequence = Column(Integer, primary_key=True)
+    shape_dist_traveled = Column(Float, nullable=True)
+
+    _validate_lon_lat = _validate_float_range(-180, 180,
+                                              'shape_pt_lon', 'shape_pt_lat')
+    _validate_shape_dist_traveled = _validate_float_none('shape_dist_traveled')
+
+    def __repr__(self):
+        return '<ShapePoint %s>' % self.shape_id
+
+
 class Trip(Base):
     __tablename__ = 'trips'
     _plural_name_ = 'trips'
@@ -256,12 +254,16 @@ class Trip(Base):
     wheelchair_accessible = Column(Integer, nullable=True)
     bikes_allowed = Column(Integer, nullable=True)
 
-    stop_times = relationship("StopTime", backref="trip")
-    frequencies = relationship("Frequency", backref="trip")
+    route = relationship(Route, backref="trips",
+            primaryjoin=and_(Route.route_id==foreign(route_id),
+                             Route.feed_id==feed_id))
+
+    shape_points = relationship(ShapePoint, backref="trips",
+            primaryjoin=and_(ShapePoint.shape_id==foreign(shape_id),
+                             ShapePoint.feed_id==feed_id))
 
     # TODO: The service_id references to calendar or to calendar_dates.
     # Need to implement this requirement, but not using a simple foreign key.
-    __table_args__ = create_foreign_keys('routes.route_id', 'shapes.shape_id')
 
     _validate_direction_id = _validate_int_choice([None, 0, 1], 'direction_id')
     _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
@@ -279,6 +281,7 @@ class Translation(Base):
     trans_id = Column(Unicode, primary_key=True, index=True)
     lang = Column(Unicode, primary_key=True)
     translation = Column(Unicode)
+
     __table_args__ = (ForeignKeyConstraint(["feed_id", 'trans_id'],
                                            ["stops.feed_id",
                                             "stops.stop_name"]),)
@@ -303,7 +306,12 @@ class StopTime(Base):
     shape_dist_traveled = Column(Integer, nullable=True)
     timepoint = Column(Integer, nullable=True)
 
-    __table_args__ = create_foreign_keys('trips.trip_id', 'stops.stop_id')
+    stop = relationship(Stop, backref='stop_times',
+            primaryjoin=and_(Stop.stop_id==foreign(stop_id),
+                             Stop.feed_id==feed_id))
+    trip = relationship(Trip, backref="stop_times",
+            primaryjoin=and_(Trip.trip_id==foreign(trip_id),
+                             Trip.feed_id==feed_id))
 
     _validate_pickup_drop_off = _validate_int_choice([None, 0, 1, 2, 3],
                                                      'pickup_type',
@@ -405,8 +413,9 @@ class FareRule(Base):
     destination_id = Column(Unicode, nullable=True, primary_key=True)
     contains_id = Column(Unicode, nullable=True, primary_key=True)
 
-    __table_args__ = create_foreign_keys('fare_attributes.fare_id',
-                                         'routes.route_id')
+    route = relationship(Route, backref="fare_rules",
+            primaryjoin=and_(Route.route_id==foreign(route_id),
+                             Route.feed_id==feed_id))
 
     def __repr__(self):
         return '<FareRule %s: %s %s %s %s>' % (self.fare_id,
@@ -414,26 +423,6 @@ class FareRule(Base):
                                                self.origin_id,
                                                self.destination_id,
                                                self.contains_id)
-
-
-class ShapePoint(Base):
-    __tablename__ = 'shapes'
-    _plural_name_ = 'shapes'
-    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    shape_id = Column(Unicode, primary_key=True)
-    shape_pt_lat = Column(Float)
-    shape_pt_lon = Column(Float)
-    shape_pt_sequence = Column(Integer, primary_key=True)
-    shape_dist_traveled = Column(Float, nullable=True)
-
-    trips = relationship("Trip", backref="shape_points")
-
-    _validate_lon_lat = _validate_float_range(-180, 180,
-                                              'shape_pt_lon', 'shape_pt_lat')
-    _validate_shape_dist_traveled = _validate_float_none('shape_dist_traveled')
-
-    def __repr__(self):
-        return '<ShapePoint %s>' % self.shape_id
 
 
 class Frequency(Base):
@@ -446,7 +435,9 @@ class Frequency(Base):
     headway_secs = Column(Integer)
     exact_times = Column(Integer, nullable=True)
 
-    __table_args__ = create_foreign_keys('trips.trip_id')
+    trip = relationship(Trip, backref="frequencies",
+            primaryjoin=and_(Trip.trip_id==foreign(trip_id),
+                             Trip.feed_id==feed_id))
 
     _validate_exact_times = _validate_int_choice([None, 0, 1], 'exact_times')
     _validate_deltas = _validate_time_delta('start_time', 'end_time')
@@ -465,14 +456,12 @@ class Transfer(Base):
     transfer_type = Column(Integer, nullable=True)  # required; allowed empty
     min_transfer_time = Column(Integer, nullable=True)
 
-    __table_args__ = (
-        ForeignKeyConstraint(
-            ('feed_id', 'from_stop_id'), ('stops.feed_id', 'stops.stop_id')
-        ),
-        ForeignKeyConstraint(
-            ('feed_id', 'to_stop_id'), ('stops.feed_id', 'stops.stop_id')
-        ),
-    )
+    stop_to = relationship(Stop, backref="transfers_to",
+            primaryjoin=and_(Stop.stop_id==foreign(to_stop_id),
+                             Stop.feed_id==feed_id))
+    stop_from = relationship(Stop, backref="transfers_from",
+            primaryjoin=and_(Stop.stop_id==foreign(from_stop_id),
+                             Stop.feed_id==feed_id))
 
     _validate_transfer_type = _validate_int_choice([None, 0, 1, 2, 3],
                                                    'transfer_type')
