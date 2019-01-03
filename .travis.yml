@@ -1,12 +1,21 @@
 language: python
 sudo: false
 python:
-  - "2.7"
-  - "3.3"
-  - "3.4"
-  - "3.5"
   - "3.6"
+  - "3.5"
+  - "3.4"
+  - "3.3"
+  - "2.7"
   - "pypy3.5"
+matrix:
+  include:
+  - name: "postgres gtfs load test"
+    services:
+      - postgresql
+    install:
+      - pip install six sqlalchemy pytz docopt psycopg2-binary
+    script:
+      - python -m pygtfs.gtfs2db append test/data/sample_feed/ postgresql://postgres@localhost:5432
 install:
   - pip install six sqlalchemy pytz docopt
 script:
