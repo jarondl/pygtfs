@@ -187,6 +187,10 @@ class Route(Base):
     route_color = Column(Unicode, nullable=True)
     route_text_color = Column(Unicode, nullable=True)
 
+    __table_args__ = (
+        ForeignKeyConstraint([feed_id, agency_id], [Agency.feed_id, Agency.agency_id]),
+    )
+
     agency = relationship(Agency, backref="routes",
             primaryjoin=and_(Agency.agency_id==foreign(agency_id),
                              Agency.feed_id==feed_id))
@@ -303,6 +307,12 @@ class Trip(Base):
     wheelchair_accessible = Column(Integer, nullable=True)
     bikes_allowed = Column(Integer, nullable=True)
 
+    __table_args__ = (
+        ForeignKeyConstraint([feed_id, route_id], [Route.feed_id, Route.route_id]),
+        ForeignKeyConstraint([feed_id, shape_id], [ShapePoint.feed_id, ShapePoint.shape_id]),
+        ForeignKeyConstraint([feed_id, service_id], [Service.feed_id, Service.service_id]),
+    )
+
     route = relationship(Route, backref="trips",
             primaryjoin=and_(Route.route_id==foreign(route_id),
                              Route.feed_id==feed_id))
@@ -359,6 +369,11 @@ class StopTime(Base):
     shape_dist_traveled = Column(Integer, nullable=True)
     timepoint = Column(Integer, nullable=True)
 
+    __table_args__ = (
+        ForeignKeyConstraint([feed_id, stop_id], [Stop.feed_id, Stop.stop_id]),
+        ForeignKeyConstraint([feed_id, trip_id], [Trip.feed_id, Trip.trip_id]),
+    )
+
     stop = relationship(Stop, backref='stop_times',
             primaryjoin=and_(Stop.stop_id==foreign(stop_id),
                              Stop.feed_id==feed_id))
@@ -410,6 +425,10 @@ class FareRule(Base):
     destination_id = Column(Unicode, nullable=True, primary_key=True)
     contains_id = Column(Unicode, nullable=True, primary_key=True)
 
+    __table_args__ = (
+        ForeignKeyConstraint([feed_id, route_id], [Route.feed_id, Route.route_id]),
+    )
+
     route = relationship(Route, backref="fare_rules",
             primaryjoin=and_(Route.route_id==foreign(route_id),
                              Route.feed_id==feed_id))
@@ -432,6 +451,10 @@ class Frequency(Base):
     headway_secs = Column(Integer)
     exact_times = Column(Integer, nullable=True)
 
+    __table_args__ = (
+        ForeignKeyConstraint([feed_id, trip_id], [Trip.feed_id, Trip.trip_id]),
+    )
+
     trip = relationship(Trip, backref="frequencies",
             primaryjoin=and_(Trip.trip_id==foreign(trip_id),
                              Trip.feed_id==feed_id))
@@ -452,6 +475,11 @@ class Transfer(Base):
     to_stop_id = Column(Unicode, primary_key=True)
     transfer_type = Column(Integer, nullable=True)  # required; allowed empty
     min_transfer_time = Column(Integer, nullable=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint([feed_id, to_stop_id], [Stop.feed_id, Stop.stop_id]),
+        ForeignKeyConstraint([feed_id, from_stop_id], [Stop.feed_id, Stop.stop_id]),
+    )
 
     stop_to = relationship(Stop, backref="transfers_to",
             primaryjoin=and_(Stop.stop_id==foreign(to_stop_id),
