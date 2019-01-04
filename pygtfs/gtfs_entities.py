@@ -187,6 +187,10 @@ class Route(Base):
     route_color = Column(Unicode, nullable=True)
     route_text_color = Column(Unicode, nullable=True)
 
+    __table_args__ = (
+        ForeignKeyConstraint([feed_id, agency_id], [Agency.feed_id, Agency.agency_id]),
+    )
+
     agency = relationship(Agency, backref="routes",
             primaryjoin=and_(Agency.agency_id==foreign(agency_id),
                              Agency.feed_id==feed_id))
@@ -238,6 +242,55 @@ class ShapePoint(Base):
         return '<ShapePoint %s>' % self.shape_id
 
 
+class Service(Base):
+    __tablename__ = 'calendar'
+    _plural_name_ = 'services'
+    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
+    service_id = Column(Unicode, primary_key=True, index=True)
+    id = synonym('service_id')
+    monday = Column(Boolean)
+    tuesday = Column(Boolean)
+    wednesday = Column(Boolean)
+    thursday = Column(Boolean)
+    friday = Column(Boolean)
+    saturday = Column(Boolean)
+    sunday = Column(Boolean)
+    start_date = Column(Date)
+    end_date = Column(Date)
+
+    _validate_bools = _validate_int_bool('monday', 'tuesday', 'wednesday',
+                                         'thursday', 'friday', 'saturday',
+                                         'sunday')
+    _validate_dates = _validate_date('start_date', 'end_date')
+
+    def __repr__(self):
+        dayofweek = ''
+        if self.monday: dayofweek += 'M'
+        if self.tuesday: dayofweek += 'T'
+        if self.wednesday: dayofweek += 'W'
+        if self.thursday: dayofweek += 'Th'
+        if self.friday: dayofweek += 'F'
+        if self.saturday: dayofweek += 'S'
+        if self.sunday: dayofweek += 'Su'
+        return '<Service %s (%s)>' % (self.service_id, dayofweek)
+
+
+class ServiceException(Base):
+    __tablename__ = 'calendar_dates'
+    _plural_name_ = 'service_exceptions'
+    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
+    service_id = Column(Unicode, primary_key=True, index=True)
+    id = synonym('service_id')
+    date = Column(Date, primary_key=True)
+    exception_type = Column(Integer)
+
+    _validate_exception_type = _validate_int_choice([1, 2], 'exception_type')
+    _validate_dates = _validate_date('date')
+
+    def __repr__(self):
+        return '<ServiceException %s: %s>' % (self.service_id, self.date)
+
+
 class Trip(Base):
     __tablename__ = 'trips'
     _plural_name_ = 'trips'
@@ -254,6 +307,12 @@ class Trip(Base):
     wheelchair_accessible = Column(Integer, nullable=True)
     bikes_allowed = Column(Integer, nullable=True)
 
+    __table_args__ = (
+        ForeignKeyConstraint([feed_id, route_id], [Route.feed_id, Route.route_id]),
+        ForeignKeyConstraint([feed_id, shape_id], [ShapePoint.feed_id, ShapePoint.shape_id]),
+        ForeignKeyConstraint([feed_id, service_id], [Service.feed_id, Service.service_id]),
+    )
+
     route = relationship(Route, backref="trips",
             primaryjoin=and_(Route.route_id==foreign(route_id),
                              Route.feed_id==feed_id))
@@ -264,6 +323,10 @@ class Trip(Base):
 
     # TODO: The service_id references to calendar or to calendar_dates.
     # Need to implement this requirement, but not using a simple foreign key.
+    service = relationship(Service, backref='trips',
+              primaryjoin=and_(foreign(service_id) == Service.service_id,
+                               feed_id == Service.feed_id))
+
 
     _validate_direction_id = _validate_int_choice([None, 0, 1], 'direction_id')
     _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
@@ -306,6 +369,11 @@ class StopTime(Base):
     shape_dist_traveled = Column(Integer, nullable=True)
     timepoint = Column(Integer, nullable=True)
 
+    __table_args__ = (
+        ForeignKeyConstraint([feed_id, stop_id], [Stop.feed_id, Stop.stop_id]),
+        ForeignKeyConstraint([feed_id, trip_id], [Trip.feed_id, Trip.trip_id]),
+    )
+
     stop = relationship(Stop, backref='stop_times',
             primaryjoin=and_(Stop.stop_id==foreign(stop_id),
                              Stop.feed_id==feed_id))
@@ -322,62 +390,6 @@ class StopTime(Base):
 
     def __repr__(self):
         return '<StopTime %s: %d>' % (self.trip_id, self.stop_sequence)
-
-
-class Service(Base):
-    __tablename__ = 'calendar'
-    _plural_name_ = 'services'
-    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    service_id = Column(Unicode, primary_key=True, index=True)
-    id = synonym('service_id')
-    monday = Column(Boolean)
-    tuesday = Column(Boolean)
-    wednesday = Column(Boolean)
-    thursday = Column(Boolean)
-    friday = Column(Boolean)
-    saturday = Column(Boolean)
-    sunday = Column(Boolean)
-    start_date = Column(Date)
-    end_date = Column(Date)
-
-    trips = relationship('Trip',
-                         backref='service',
-                         primaryjoin=and_(service_id == Trip.service_id,
-                                          feed_id == Trip.feed_id),
-                         foreign_keys=[Trip.service_id, Trip.feed_id]
-                         )
-
-    _validate_bools = _validate_int_bool('monday', 'tuesday', 'wednesday',
-                                         'thursday', 'friday', 'saturday',
-                                         'sunday')
-    _validate_dates = _validate_date('start_date', 'end_date')
-
-    def __repr__(self):
-        dayofweek = ''
-        if self.monday: dayofweek += 'M'
-        if self.tuesday: dayofweek += 'T'
-        if self.wednesday: dayofweek += 'W'
-        if self.thursday: dayofweek += 'Th'
-        if self.friday: dayofweek += 'F'
-        if self.saturday: dayofweek += 'S'
-        if self.sunday: dayofweek += 'Su'
-        return '<Service %s (%s)>' % (self.service_id, dayofweek)
-
-
-class ServiceException(Base):
-    __tablename__ = 'calendar_dates'
-    _plural_name_ = 'service_exceptions'
-    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    service_id = Column(Unicode, primary_key=True, index=True)
-    id = synonym('service_id')
-    date = Column(Date, primary_key=True)
-    exception_type = Column(Integer)
-
-    _validate_exception_type = _validate_int_choice([1, 2], 'exception_type')
-    _validate_dates = _validate_date('date')
-
-    def __repr__(self):
-        return '<ServiceException %s: %s>' % (self.service_id, self.date)
 
 
 class Fare(Base):
@@ -413,6 +425,10 @@ class FareRule(Base):
     destination_id = Column(Unicode, nullable=True, primary_key=True)
     contains_id = Column(Unicode, nullable=True, primary_key=True)
 
+    __table_args__ = (
+        ForeignKeyConstraint([feed_id, route_id], [Route.feed_id, Route.route_id]),
+    )
+
     route = relationship(Route, backref="fare_rules",
             primaryjoin=and_(Route.route_id==foreign(route_id),
                              Route.feed_id==feed_id))
@@ -435,6 +451,10 @@ class Frequency(Base):
     headway_secs = Column(Integer)
     exact_times = Column(Integer, nullable=True)
 
+    __table_args__ = (
+        ForeignKeyConstraint([feed_id, trip_id], [Trip.feed_id, Trip.trip_id]),
+    )
+
     trip = relationship(Trip, backref="frequencies",
             primaryjoin=and_(Trip.trip_id==foreign(trip_id),
                              Trip.feed_id==feed_id))
@@ -455,6 +475,11 @@ class Transfer(Base):
     to_stop_id = Column(Unicode, primary_key=True)
     transfer_type = Column(Integer, nullable=True)  # required; allowed empty
     min_transfer_time = Column(Integer, nullable=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint([feed_id, to_stop_id], [Stop.feed_id, Stop.stop_id]),
+        ForeignKeyConstraint([feed_id, from_stop_id], [Stop.feed_id, Stop.stop_id]),
+    )
 
     stop_to = relationship(Stop, backref="transfers_to",
             primaryjoin=and_(Stop.stop_id==foreign(to_stop_id),
