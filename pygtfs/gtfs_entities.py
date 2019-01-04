@@ -238,6 +238,55 @@ class ShapePoint(Base):
         return '<ShapePoint %s>' % self.shape_id
 
 
+class Service(Base):
+    __tablename__ = 'calendar'
+    _plural_name_ = 'services'
+    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
+    service_id = Column(Unicode, primary_key=True, index=True)
+    id = synonym('service_id')
+    monday = Column(Boolean)
+    tuesday = Column(Boolean)
+    wednesday = Column(Boolean)
+    thursday = Column(Boolean)
+    friday = Column(Boolean)
+    saturday = Column(Boolean)
+    sunday = Column(Boolean)
+    start_date = Column(Date)
+    end_date = Column(Date)
+
+    _validate_bools = _validate_int_bool('monday', 'tuesday', 'wednesday',
+                                         'thursday', 'friday', 'saturday',
+                                         'sunday')
+    _validate_dates = _validate_date('start_date', 'end_date')
+
+    def __repr__(self):
+        dayofweek = ''
+        if self.monday: dayofweek += 'M'
+        if self.tuesday: dayofweek += 'T'
+        if self.wednesday: dayofweek += 'W'
+        if self.thursday: dayofweek += 'Th'
+        if self.friday: dayofweek += 'F'
+        if self.saturday: dayofweek += 'S'
+        if self.sunday: dayofweek += 'Su'
+        return '<Service %s (%s)>' % (self.service_id, dayofweek)
+
+
+class ServiceException(Base):
+    __tablename__ = 'calendar_dates'
+    _plural_name_ = 'service_exceptions'
+    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
+    service_id = Column(Unicode, primary_key=True, index=True)
+    id = synonym('service_id')
+    date = Column(Date, primary_key=True)
+    exception_type = Column(Integer)
+
+    _validate_exception_type = _validate_int_choice([1, 2], 'exception_type')
+    _validate_dates = _validate_date('date')
+
+    def __repr__(self):
+        return '<ServiceException %s: %s>' % (self.service_id, self.date)
+
+
 class Trip(Base):
     __tablename__ = 'trips'
     _plural_name_ = 'trips'
@@ -264,6 +313,10 @@ class Trip(Base):
 
     # TODO: The service_id references to calendar or to calendar_dates.
     # Need to implement this requirement, but not using a simple foreign key.
+    service = relationship(Service, backref='trips',
+              primaryjoin=and_(foreign(service_id) == Service.service_id,
+                               feed_id == Service.feed_id))
+
 
     _validate_direction_id = _validate_int_choice([None, 0, 1], 'direction_id')
     _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
@@ -322,62 +375,6 @@ class StopTime(Base):
 
     def __repr__(self):
         return '<StopTime %s: %d>' % (self.trip_id, self.stop_sequence)
-
-
-class Service(Base):
-    __tablename__ = 'calendar'
-    _plural_name_ = 'services'
-    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    service_id = Column(Unicode, primary_key=True, index=True)
-    id = synonym('service_id')
-    monday = Column(Boolean)
-    tuesday = Column(Boolean)
-    wednesday = Column(Boolean)
-    thursday = Column(Boolean)
-    friday = Column(Boolean)
-    saturday = Column(Boolean)
-    sunday = Column(Boolean)
-    start_date = Column(Date)
-    end_date = Column(Date)
-
-    trips = relationship('Trip',
-                         backref='service',
-                         primaryjoin=and_(service_id == Trip.service_id,
-                                          feed_id == Trip.feed_id),
-                         foreign_keys=[Trip.service_id, Trip.feed_id]
-                         )
-
-    _validate_bools = _validate_int_bool('monday', 'tuesday', 'wednesday',
-                                         'thursday', 'friday', 'saturday',
-                                         'sunday')
-    _validate_dates = _validate_date('start_date', 'end_date')
-
-    def __repr__(self):
-        dayofweek = ''
-        if self.monday: dayofweek += 'M'
-        if self.tuesday: dayofweek += 'T'
-        if self.wednesday: dayofweek += 'W'
-        if self.thursday: dayofweek += 'Th'
-        if self.friday: dayofweek += 'F'
-        if self.saturday: dayofweek += 'S'
-        if self.sunday: dayofweek += 'Su'
-        return '<Service %s (%s)>' % (self.service_id, dayofweek)
-
-
-class ServiceException(Base):
-    __tablename__ = 'calendar_dates'
-    _plural_name_ = 'service_exceptions'
-    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    service_id = Column(Unicode, primary_key=True, index=True)
-    id = synonym('service_id')
-    date = Column(Date, primary_key=True)
-    exception_type = Column(Integer)
-
-    _validate_exception_type = _validate_int_choice([1, 2], 'exception_type')
-    _validate_dates = _validate_date('date')
-
-    def __repr__(self):
-        return '<ServiceException %s: %s>' % (self.service_id, self.date)
 
 
 class Fare(Base):
