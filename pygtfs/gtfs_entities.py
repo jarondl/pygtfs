@@ -160,7 +160,10 @@ class Stop(Base):
     wheelchair_boarding = Column(Integer, nullable=True)
     platform_code = Column(Unicode, nullable=True)
 
-    translations = relationship('Translation', foreign_keys='Translation.trans_id')
+    translations = relationship(
+        'Translation', viewonly=True,
+        primaryjoin="and_(Stop.feed_id==translations.c.feed_id, Stop.stop_name==translations.c.trans_id)",
+    )
 
     _validate_location = _validate_int_choice([None, 0, 1, 2], 'location_type')
     _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
@@ -340,7 +343,7 @@ class Trip(Base):
 class Translation(Base):
     __tablename__ = 'translations'
     _plural_name_ = 'translations'
-    feed_id = Column(Integer, ForeignKey('_feed.feed_id'))
+    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     trans_id = Column(Unicode, primary_key=True, index=True)
     lang = Column(Unicode, primary_key=True)
     translation = Column(Unicode)
