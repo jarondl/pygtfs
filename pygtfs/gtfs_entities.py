@@ -534,9 +534,9 @@ _trip_shapes = Table(
 
 
 # a feed can skip Service (calendar) if it has ServiceException(calendar_dates)
-
-gtfs_required = [Agency, Stop, Route, Trip, StopTime]
-gtfs_calendar = [Service, ServiceException]
-gtfs_not_required = [Fare, FareRule, ShapePoint, Frequency, Transfer, FeedInfo,
-                     Translation]
-gtfs_all = gtfs_required + gtfs_calendar + gtfs_not_required
+gtfs_required = {Agency, Stop, Route, Trip, StopTime}
+gtfs_calendar = {Service, ServiceException}
+# gtfs all must maintain the right insertion order due to dependencies.
+gtfs_all = [Agency, Stop, Transfer, Route, Fare, FareRule, ShapePoint,
+            Service, ServiceException, Trip, Frequency, StopTime, FeedInfo,
+            Translation]
