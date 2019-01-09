@@ -12,7 +12,7 @@ from __future__ import (division, absolute_import, print_function,
 
 import datetime
 
-from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, and_
+from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, and_, Table
 from sqlalchemy.types import (Unicode, Integer, Float, Boolean, Date, Interval,
                               Numeric)
 from sqlalchemy.ext.declarative import declarative_base
@@ -160,7 +160,7 @@ class Stop(Base):
     wheelchair_boarding = Column(Integer, nullable=True)
     platform_code = Column(Unicode, nullable=True)
 
-    translations = relationship('Translation', foreign_keys='Translation.trans_id')
+    translations = relationship('Translation', secondary='_stop_translations')
 
     _validate_location = _validate_int_choice([None, 0, 1, 2], 'location_type')
     _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
@@ -309,7 +309,6 @@ class Trip(Base):
 
     __table_args__ = (
         ForeignKeyConstraint([feed_id, route_id], [Route.feed_id, Route.route_id]),
-        ForeignKeyConstraint([feed_id, shape_id], [ShapePoint.feed_id, ShapePoint.shape_id]),
         ForeignKeyConstraint([feed_id, service_id], [Service.feed_id, Service.service_id]),
     )
 
@@ -318,8 +317,7 @@ class Trip(Base):
                              Route.feed_id==feed_id))
 
     shape_points = relationship(ShapePoint, backref="trips",
-            primaryjoin=and_(ShapePoint.shape_id==foreign(shape_id),
-                             ShapePoint.feed_id==feed_id))
+            secondary="_trip_shapes")
 
     # TODO: The service_id references to calendar or to calendar_dates.
     # Need to implement this requirement, but not using a simple foreign key.
@@ -340,14 +338,10 @@ class Trip(Base):
 class Translation(Base):
     __tablename__ = 'translations'
     _plural_name_ = 'translations'
-    feed_id = Column(Integer, ForeignKey('_feed.feed_id'))
+    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     trans_id = Column(Unicode, primary_key=True, index=True)
     lang = Column(Unicode, primary_key=True)
     translation = Column(Unicode)
-
-    __table_args__ = (ForeignKeyConstraint(["feed_id", 'trans_id'],
-                                           ["stops.feed_id",
-                                            "stops.stop_name"]),)
 
     def __repr__(self):
         return '<Translation %s (to %s): %s>' % (self.trans_id, self.lang,
@@ -510,6 +504,33 @@ class FeedInfo(Base):
 
     def __repr__(self):
         return "<FeedInfo %s>" % self.feed_publisher_name
+
+
+# Many-to-many secondary tables. Make sure to also load them properly in
+# loader.py
+_stop_translations = Table(
+    '_stop_translations', Base.metadata,
+    Column('stop_feed_id', Integer),
+    Column('stop_id', Unicode),
+    Column('trans_feed_id', Integer),
+    Column('trans_id', Unicode),
+    Column('lang', Unicode),
+    ForeignKeyConstraint(['stop_feed_id', 'stop_id'], [Stop.feed_id, Stop.stop_id]),
+    ForeignKeyConstraint(['trans_feed_id', 'trans_id', 'lang'], [Translation.feed_id, Translation.trans_id, Translation.lang]),
+)
+
+
+_trip_shapes = Table(
+    '_trip_shapes', Base.metadata,
+    Column('trip_feed_id', Integer),
+    Column('trip_id', Unicode),
+    Column('shape_feed_id', Integer),
+    Column('shape_id', Unicode),
+    Column('shape_pt_sequence', Integer),
+    ForeignKeyConstraint(['trip_feed_id', 'trip_id'], [Trip.feed_id, Trip.trip_id]),
+    ForeignKeyConstraint(['shape_feed_id', 'shape_id', 'shape_pt_sequence'],
+        [ShapePoint.feed_id, ShapePoint.shape_id, ShapePoint.shape_pt_sequence]),
+)
 
 
 # a feed can skip Service (calendar) if it has ServiceException(calendar_dates)

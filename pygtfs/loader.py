@@ -5,8 +5,10 @@ from datetime import date
 import sys
 
 import six
+from sqlalchemy import and_
 
 from .gtfs_entities import (Feed, Service, ServiceException, gtfs_required,
+                            Translation, Stop, Trip, ShapePoint,
                             gtfs_calendar, gtfs_all)
 from . import feed
 
@@ -89,6 +91,18 @@ def append_feed(schedule, feed_filename, strip_fields=True,
                 sys.stdout.flush()
         print('%d record%s read for %s.' % ((i+1), '' if i == 0 else 's',
                                             gtfs_class))
+    schedule.session.flush()
+    # load many to many relationships
+    if Translation in gtfs_tables:
+        print('Mapping translations to stops')
+        for stop, trans in schedule.session.query(Stop, Translation).join(
+                Translation, and_(Stop.feed_id==Translation.feed_id, Stop.stop_name==Translation.trans_id)):
+            stop.translations.append(trans)
+    if ShapePoint in gtfs_tables:
+        print('Mapping shapes to trips')
+        for trip, shape in schedule.session.query(Trip, ShapePoint).join(
+                ShapePoint, and_(Trip.feed_id==ShapePoint.feed_id, Trip.shape_id==ShapePoint.shape_id)):
+            trip.shape_points.append(shape)
     schedule.session.commit()
 
     print('Complete.')
