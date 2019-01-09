@@ -340,7 +340,7 @@ class Trip(Base):
 class Translation(Base):
     __tablename__ = 'translations'
     _plural_name_ = 'translations'
-    feed_id = Column(Integer, ForeignKey('_feed.feed_id'))
+    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     trans_id = Column(Unicode, primary_key=True, index=True)
     lang = Column(Unicode, primary_key=True)
     translation = Column(Unicode)
