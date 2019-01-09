@@ -15,7 +15,15 @@ matrix:
     install:
       - pip install six sqlalchemy pytz docopt psycopg2-binary
     script:
-      - python -m pygtfs.gtfs2db append test/data/sample_feed/ postgresql://postgres@localhost:5432
+      - python -m pygtfs.gtfs2db append pygtfs/test/data/sample_feed/ postgresql://postgres@localhost:5432
+  - name: "postgres + bart gtfs load test"
+    services:
+      - postgresql
+    install:
+      - pip install six sqlalchemy pytz docopt psycopg2-binary
+      - curl -O https://www.bart.gov/sites/default/files/docs/google_transit_20180910_v13.zip
+    script:
+      - python -m pygtfs.gtfs2db append google_transit_20180910_v13.zip postgresql://postgres@localhost:5432
 install:
   - pip install six sqlalchemy pytz docopt
 script:
