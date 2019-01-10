@@ -12,7 +12,7 @@ from __future__ import (division, absolute_import, print_function,
 
 import datetime
 
-from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, and_, Table
+from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, and_, Table, Index
 from sqlalchemy.types import (Unicode, Integer, Float, Boolean, Date, Interval,
                               Numeric)
 from sqlalchemy.ext.declarative import declarative_base
@@ -234,6 +234,10 @@ class ShapePoint(Base):
     shape_pt_sequence = Column(Integer, primary_key=True)
     shape_dist_traveled = Column(Float, nullable=True)
 
+    __table_args__ = (
+        Index("shapes_shape_id", feed_id, shape_id),
+    )
+
     _validate_lon_lat = _validate_float_range(-180, 180,
                                               'shape_pt_lon', 'shape_pt_lat')
     _validate_shape_dist_traveled = _validate_float_none('shape_dist_traveled')
@@ -310,6 +314,7 @@ class Trip(Base):
     __table_args__ = (
         ForeignKeyConstraint([feed_id, route_id], [Route.feed_id, Route.route_id]),
         ForeignKeyConstraint([feed_id, service_id], [Service.feed_id, Service.service_id]),
+        Index("trips_shape_id", feed_id, shape_id),
     )
 
     route = relationship(Route, backref="trips",
