@@ -409,18 +409,18 @@ class Fare(Base):
 class FareRule(Base):
     __tablename__ = 'fare_rules'
     _plural_name_ = 'fare_rules'
-    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    fare_id = Column(Unicode, primary_key=True)
-    route_id = Column(Unicode, default='', primary_key=True)
+    fare_rule_internal_key = Column(Integer, primary_key=True)
+    feed_id = Column(Integer, ForeignKey('_feed.feed_id'))
+    fare_id = Column(Unicode)
+    # TODO: Add uniqueness constraints for fare_id,route_id,and the three
+    # zone_ids.
+    route_id = Column(Unicode, nullable=True)
 
-    # Since null != null, having primary_key be nullable makes no sense.
-    # But in this case we still want uniqueness. So we set default='', instead
-    # of nullable.
     # TODO: add a constraint such that, each one of the following attributes
     # must be one of the `stops.zone_id`s
-    origin_id = Column(Unicode, default='', primary_key=True)
-    destination_id = Column(Unicode, default='', primary_key=True)
-    contains_id = Column(Unicode, default='', primary_key=True)
+    origin_id = Column(Unicode, nullable=True)
+    destination_id = Column(Unicode, nullable=True)
+    contains_id = Column(Unicode, nullable=True)
 
     __table_args__ = (
         ForeignKeyConstraint([feed_id, route_id], [Route.feed_id, Route.route_id]),
