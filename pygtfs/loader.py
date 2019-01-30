@@ -60,7 +60,7 @@ def append_feed(schedule, feed_filename, strip_fields=True,
             if gtfs_class in gtfs_required:
                 raise IOError('Error: could not find %s' % gtfs_filename)
 
-    if Service not in gtfs_tables and ServiceException not in gtfs_tables:
+    if len(set(gtfs_tables) & gtfs_calendar) == 0:
         raise PygtfsException('Must have Calendar.txt or Calendar_dates.txt')
 
     # create new feed

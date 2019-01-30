@@ -12,7 +12,7 @@ from __future__ import (division, absolute_import, print_function,
 
 import datetime
 
-from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, and_, Table
+from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, and_, Table, Index
 from sqlalchemy.types import (Unicode, Integer, Float, Boolean, Date, Interval,
                               Numeric)
 from sqlalchemy.ext.declarative import declarative_base
@@ -234,6 +234,10 @@ class ShapePoint(Base):
     shape_pt_sequence = Column(Integer, primary_key=True)
     shape_dist_traveled = Column(Float, nullable=True)
 
+    __table_args__ = (
+        Index("shapes_shape_id", feed_id, shape_id),
+    )
+
     _validate_lon_lat = _validate_float_range(-180, 180,
                                               'shape_pt_lon', 'shape_pt_lat')
     _validate_shape_dist_traveled = _validate_float_none('shape_dist_traveled')
@@ -310,6 +314,7 @@ class Trip(Base):
     __table_args__ = (
         ForeignKeyConstraint([feed_id, route_id], [Route.feed_id, Route.route_id]),
         ForeignKeyConstraint([feed_id, service_id], [Service.feed_id, Service.service_id]),
+        Index("trips_shape_id", feed_id, shape_id),
     )
 
     route = relationship(Route, backref="trips",
@@ -409,15 +414,18 @@ class Fare(Base):
 class FareRule(Base):
     __tablename__ = 'fare_rules'
     _plural_name_ = 'fare_rules'
-    feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    fare_id = Column(Unicode, primary_key=True)
-    route_id = Column(Unicode, nullable=True, primary_key=True)
+    fare_rule_internal_key = Column(Integer, primary_key=True)
+    feed_id = Column(Integer, ForeignKey('_feed.feed_id'))
+    fare_id = Column(Unicode)
+    # TODO: Add uniqueness constraints for fare_id,route_id,and the three
+    # zone_ids.
+    route_id = Column(Unicode, nullable=True)
 
     # TODO: add a constraint such that, each one of the following attributes
     # must be one of the `stops.zone_id`s
-    origin_id = Column(Unicode, nullable=True, primary_key=True)
-    destination_id = Column(Unicode, nullable=True, primary_key=True)
-    contains_id = Column(Unicode, nullable=True, primary_key=True)
+    origin_id = Column(Unicode, nullable=True)
+    destination_id = Column(Unicode, nullable=True)
+    contains_id = Column(Unicode, nullable=True)
 
     __table_args__ = (
         ForeignKeyConstraint([feed_id, route_id], [Route.feed_id, Route.route_id]),
@@ -534,9 +542,9 @@ _trip_shapes = Table(
 
 
 # a feed can skip Service (calendar) if it has ServiceException(calendar_dates)
-
-gtfs_required = [Agency, Stop, Route, Trip, StopTime]
-gtfs_calendar = [Service, ServiceException]
-gtfs_not_required = [Fare, FareRule, ShapePoint, Frequency, Transfer, FeedInfo,
-                     Translation]
-gtfs_all = gtfs_required + gtfs_calendar + gtfs_not_required
+gtfs_required = {Agency, Stop, Route, Trip, StopTime}
+gtfs_calendar = {Service, ServiceException}
+# gtfs all must maintain the right insertion order due to dependencies.
+gtfs_all = [Agency, Stop, Transfer, Route, Fare, FareRule, ShapePoint,
+            Service, ServiceException, Trip, Frequency, StopTime, FeedInfo,
+            Translation]
