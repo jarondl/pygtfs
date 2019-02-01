@@ -32,7 +32,7 @@ class Schedule:
             self.db_connection = 'sqlite:///%s' % self.db_connection
         if self.db_connection.startswith('sqlite'):
             self.db_filename = self.db_connection
-        self.engine = sqlalchemy.create_engine(self.db_connection, echo=False)
+        self.engine = sqlalchemy.create_engine(self.db_connection)
         Session = sqlalchemy.orm.sessionmaker(bind=self.engine)
         self.session = Session()
         Base.metadata.create_all(self.engine)

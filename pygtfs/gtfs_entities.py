@@ -519,20 +519,20 @@ class FeedInfo(Base):
 _stop_translations = Table(
     '_stop_translations', Base.metadata,
     Column('stop_feed_id', Integer),
+    Column('translation_feed_id', Integer),
     Column('stop_id', Unicode),
-    Column('trans_feed_id', Integer),
     Column('trans_id', Unicode),
     Column('lang', Unicode),
     ForeignKeyConstraint(['stop_feed_id', 'stop_id'], [Stop.feed_id, Stop.stop_id]),
-    ForeignKeyConstraint(['trans_feed_id', 'trans_id', 'lang'], [Translation.feed_id, Translation.trans_id, Translation.lang]),
+    ForeignKeyConstraint(['translation_feed_id', 'trans_id', 'lang'], [Translation.feed_id, Translation.trans_id, Translation.lang]),
 )
 
 
 _trip_shapes = Table(
     '_trip_shapes', Base.metadata,
     Column('trip_feed_id', Integer),
-    Column('trip_id', Unicode),
     Column('shape_feed_id', Integer),
+    Column('trip_id', Unicode),
     Column('shape_id', Unicode),
     Column('shape_pt_sequence', Integer),
     ForeignKeyConstraint(['trip_feed_id', 'trip_id'], [Trip.feed_id, Trip.trip_id]),
