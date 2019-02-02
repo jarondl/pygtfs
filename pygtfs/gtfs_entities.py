@@ -162,6 +162,8 @@ class Stop(Base):
 
     translations = relationship('Translation', secondary='_stop_translations')
 
+    __table_args__ = (Index('idx_stop_for_translations', feed_id, stop_name, stop_id),)
+
     _validate_location = _validate_int_choice([None, 0, 1, 2], 'location_type')
     _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
                                                 'wheelchair_boarding')
@@ -235,7 +237,7 @@ class ShapePoint(Base):
     shape_dist_traveled = Column(Float, nullable=True)
 
     __table_args__ = (
-        Index("shapes_shape_id", feed_id, shape_id),
+        Index('idx_shape_for_trips', feed_id, shape_id),
     )
 
     _validate_lon_lat = _validate_float_range(-180, 180,
@@ -314,7 +316,7 @@ class Trip(Base):
     __table_args__ = (
         ForeignKeyConstraint([feed_id, route_id], [Route.feed_id, Route.route_id]),
         ForeignKeyConstraint([feed_id, service_id], [Service.feed_id, Service.service_id]),
-        Index("trips_shape_id", feed_id, shape_id),
+        Index('idx_trips_shape_id', feed_id, shape_id),
     )
 
     route = relationship(Route, backref="trips",
@@ -347,6 +349,8 @@ class Translation(Base):
     trans_id = Column(Unicode, primary_key=True, index=True)
     lang = Column(Unicode, primary_key=True)
     translation = Column(Unicode)
+
+    __table_args__ = (Index('idx_translations_for_stops', feed_id, trans_id),)
 
     def __repr__(self):
         return '<Translation %s (to %s): %s>' % (self.trans_id, self.lang,
@@ -519,20 +523,20 @@ class FeedInfo(Base):
 _stop_translations = Table(
     '_stop_translations', Base.metadata,
     Column('stop_feed_id', Integer),
+    Column('translation_feed_id', Integer),
     Column('stop_id', Unicode),
-    Column('trans_feed_id', Integer),
     Column('trans_id', Unicode),
     Column('lang', Unicode),
     ForeignKeyConstraint(['stop_feed_id', 'stop_id'], [Stop.feed_id, Stop.stop_id]),
-    ForeignKeyConstraint(['trans_feed_id', 'trans_id', 'lang'], [Translation.feed_id, Translation.trans_id, Translation.lang]),
+    ForeignKeyConstraint(['translation_feed_id', 'trans_id', 'lang'], [Translation.feed_id, Translation.trans_id, Translation.lang]),
 )
 
 
 _trip_shapes = Table(
     '_trip_shapes', Base.metadata,
     Column('trip_feed_id', Integer),
-    Column('trip_id', Unicode),
     Column('shape_feed_id', Integer),
+    Column('trip_id', Unicode),
     Column('shape_id', Unicode),
     Column('shape_pt_sequence', Integer),
     ForeignKeyConstraint(['trip_feed_id', 'trip_id'], [Trip.feed_id, Trip.trip_id]),
