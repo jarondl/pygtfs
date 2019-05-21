@@ -56,7 +56,10 @@ def append_feed(schedule, feed_filename, strip_fields=True,
         gtfs_filename = gtfs_class.__tablename__ + '.txt'
 
         try:
-            gtfs_tables[gtfs_class] = fd.read_table(gtfs_filename, gtfs_class.__table__.columns)
+            # We ignore the feed supplied feed id, because we create our own
+            # later.
+            gtfs_tables[gtfs_class] = fd.read_table(gtfs_filename,
+                                                    set(c.name for c in gtfs_class.__table__.columns) - {'feed_id'})
         except (KeyError, IOError):
             if gtfs_class in gtfs_required:
                 raise IOError('Error: could not find %s' % gtfs_filename)
