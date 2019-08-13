@@ -369,7 +369,7 @@ class StopTime(Base):
     stop_headsign = Column(Unicode)
     pickup_type = Column(Integer)
     drop_off_type = Column(Integer)
-    shape_dist_traveled = Column(Integer, nullable=True)
+    shape_dist_traveled = Column(Numeric, nullable=True)
     timepoint = Column(Integer, nullable=True)
 
     __table_args__ = (
