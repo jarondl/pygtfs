@@ -164,7 +164,7 @@ class Stop(Base):
 
     __table_args__ = (Index('idx_stop_for_translations', feed_id, stop_name, stop_id),)
 
-    _validate_location = _validate_int_choice([None, 0, 1, 2], 'location_type')
+    _validate_location = _validate_int_choice([None, 0, 1, 2, 3, 4], 'location_type')
     _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
                                                 'wheelchair_boarding')
     _validate_lon_lat = _validate_float_range(-180, 180, 'stop_lon',
