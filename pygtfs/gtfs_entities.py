@@ -154,7 +154,7 @@ class Stop(Base):
     zone_id = Column(Unicode, nullable=True)
     stop_url = Column(Unicode, nullable=True)
     location_type = Column(Integer, nullable=True)
-    parent_station = Column(Integer, nullable=True)
+    parent_station = Column(Unicode, nullable=True)
     stop_timezone = Column(Unicode, nullable=True)
     wheelchair_boarding = Column(Integer, nullable=True)
     platform_code = Column(Unicode, nullable=True)
