@@ -517,9 +517,9 @@ class Transfer(Base):
                                                    'transfer_type')
 
     def __repr__(self):
-        return f"<Transfer from " \
-               + "({self.from_stop_id}, {self.from_route_id}, {self.from_trip_id}) " \
-               + "to ({self.to_stop_id}, {self.to_route_id} ,{self.to_trip_id})>"
+        return "<Transfer from (%s, %s, %s) to (%s, %s, %s)>" % (self.from_stop_id, self.from_route_id,
+                                                                 self.from_trip_id, self.to_stop_id,
+                                                                 self.to_route_id, self.to_trip_id)
 
 
 class FeedInfo(Base):
