@@ -478,20 +478,17 @@ class Transfer(Base):
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     from_stop_id = Column(Unicode, primary_key=True)
     to_stop_id = Column(Unicode, primary_key=True)
-    from_route_id = Column(Unicode, primary_key=True, nullable=True)
-    to_route_id = Column(Unicode, primary_key=True, nullable=True)
-    from_trip_id = Column(Unicode, primary_key=True, nullable=True)
-    to_trip_id = Column(Unicode, primary_key=True, nullable=True)
+    # Not null with default empty string to keep PostgreSQL happy
+    from_route_id = Column(Unicode, primary_key=True, nullable=False, default="")
+    to_route_id = Column(Unicode, primary_key=True, nullable=False, default="")
+    from_trip_id = Column(Unicode, primary_key=True, nullable=False, default="")
+    to_trip_id = Column(Unicode, primary_key=True, nullable=False, default="")
     transfer_type = Column(Integer, nullable=True)  # required; allowed empty
     min_transfer_time = Column(Integer, nullable=True)
 
     __table_args__ = (
         ForeignKeyConstraint([feed_id, from_stop_id], [Stop.feed_id, Stop.stop_id]),
         ForeignKeyConstraint([feed_id, to_stop_id], [Stop.feed_id, Stop.stop_id]),
-        ForeignKeyConstraint([feed_id, from_route_id], [Route.feed_id, Route.route_id]),
-        ForeignKeyConstraint([feed_id, to_route_id], [Route.feed_id, Route.route_id]),
-        ForeignKeyConstraint([feed_id, from_trip_id], [Trip.feed_id, Trip.trip_id]),
-        ForeignKeyConstraint([feed_id, to_trip_id], [Trip.feed_id, Trip.trip_id]),
     )
 
     stop_to = relationship(Stop, backref="transfers_to",

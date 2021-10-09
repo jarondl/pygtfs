@@ -75,9 +75,9 @@ class TestSchedule(unittest.TestCase):
         self.assertEqual(0, len(self.schedule.stops[1].transfers_from))
         self.assertEqual(3, len(self.schedule.stops[1].transfers_to))
         self.assertEqual([
-            (0, 'BEATTY_AIRPORT', None, None),
-            (3, 'BEATTY_AIRPORT', None, 'AAMV4'),
-            (1, 'BEATTY_AIRPORT', 'STBA', None),
+            (0, 'BEATTY_AIRPORT', '', ''),
+            (3, 'BEATTY_AIRPORT', '', 'AAMV4'),
+            (1, 'BEATTY_AIRPORT', 'STBA', ''),
         ], [(tr.transfer_type, tr.to_stop_id, tr.to_route_id, tr.to_trip_id) for tr in self.schedule.stops[1].transfers_to])
 
     def test_transfers_route_to_route(self):
