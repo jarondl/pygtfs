@@ -4,7 +4,8 @@ from __future__ import unicode_literals
 
 import datetime
 import os.path
-# use unittest2 for Python2.6 compatibility. 
+
+# use unittest2 for Python2.6 compatibility.
 try:
     import unittest2 as unittest
 except ImportError:
@@ -67,6 +68,37 @@ class TestSchedule(unittest.TestCase):
     def test_agency_routes(self):
         self.assertEqual([rt.route_id for rt in self.schedule.agencies[0].routes],
                          ['AAMV', 'AB', 'BFC', 'CITY', 'EXT', 'STBA'])
+
+    def test_transfers(self):
+        self.assertEqual(3, len(self.schedule.stops[0].transfers_from))
+        self.assertEqual(0, len(self.schedule.stops[0].transfers_to))
+        self.assertEqual(0, len(self.schedule.stops[1].transfers_from))
+        self.assertEqual(3, len(self.schedule.stops[1].transfers_to))
+        self.assertEqual([
+            (0, 'BEATTY_AIRPORT', None, None),
+            (3, 'BEATTY_AIRPORT', None, 'AAMV4'),
+            (1, 'BEATTY_AIRPORT', 'STBA', None),
+        ], [(tr.transfer_type, tr.to_stop_id, tr.to_route_id, tr.to_trip_id) for tr in self.schedule.stops[1].transfers_to])
+
+    def test_transfers_route_to_route(self):
+        self.assertEqual(1, len(self.schedule.agencies[0].routes[0].transfers_from))
+        self.assertEqual(0, len(self.schedule.agencies[0].routes[0].transfers_to))
+        self.assertEqual(0, len(self.schedule.agencies[0].routes[5].transfers_from))
+        self.assertEqual(1, len(self.schedule.agencies[0].routes[5].transfers_to))
+        self.assertEqual([1], [tr.transfer_type for tr in self.schedule.agencies[0].routes[0].transfers_from])
+        self.assertEqual([], [tr.transfer_type for tr in self.schedule.agencies[0].routes[0].transfers_to])
+        self.assertEqual([], [tr.transfer_type for tr in self.schedule.agencies[0].routes[5].transfers_from])
+        self.assertEqual([1], [tr.transfer_type for tr in self.schedule.agencies[0].routes[5].transfers_to])
+
+    def test_transfers_trip_to_trip(self):
+        self.assertEqual(1, len(self.schedule.trips[8].transfers_from))
+        self.assertEqual(0, len(self.schedule.trips[8].transfers_to))
+        self.assertEqual(0, len(self.schedule.trips[10].transfers_from))
+        self.assertEqual(1, len(self.schedule.trips[10].transfers_to))
+        self.assertEqual([3], [tr.transfer_type for tr in self.schedule.trips[8].transfers_from])
+        self.assertEqual([], [tr.transfer_type for tr in self.schedule.trips[8].transfers_to])
+        self.assertEqual([], [tr.transfer_type for tr in self.schedule.trips[10].transfers_from])
+        self.assertEqual([3], [tr.transfer_type for tr in self.schedule.trips[10].transfers_to])
 
     def test_trips_bikes_allowed(self):
         for t in self.schedule.trips:
