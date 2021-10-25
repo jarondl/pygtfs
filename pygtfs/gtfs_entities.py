@@ -200,6 +200,7 @@ class Route(Base):
     # https://developers.google.com/transit/gtfs/reference/extended-route-types
     valid_extended_route_types = [
         range(8),
+        range(11, 13),
         range(100, 118),
         range(200, 210),
         [300],
