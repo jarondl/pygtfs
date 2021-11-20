@@ -1,0 +1,4 @@
+transfer_type,from_stop_id,to_stop_id,from_route_id,to_route_id,from_trip_id,to_trip_id
+0,FUR_CREEK_RES,BEATTY_AIRPORT,,,,
+3,FUR_CREEK_RES,BEATTY_AIRPORT,,,AAMV2,AAMV4
+1,FUR_CREEK_RES,BEATTY_AIRPORT,AAMV,STBA,,

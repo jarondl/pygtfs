@@ -9,14 +9,13 @@ has a `trips` attribute, with a list of trips for the specific route.
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
-
 import datetime
 
 from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, and_, Table, Index
-from sqlalchemy.types import (Unicode, Integer, Float, Boolean, Date, Interval,
-                              Numeric)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates, synonym, foreign
+from sqlalchemy.types import (Unicode, Integer, Float, Boolean, Date, Interval,
+                              Numeric)
 
 from .exceptions import PygtfsValidationError
 
@@ -155,7 +154,7 @@ class Stop(Base):
     zone_id = Column(Unicode, nullable=True)
     stop_url = Column(Unicode, nullable=True)
     location_type = Column(Integer, nullable=True)
-    parent_station = Column(Integer, nullable=True)
+    parent_station = Column(Unicode, nullable=True)
     stop_timezone = Column(Unicode, nullable=True)
     wheelchair_boarding = Column(Integer, nullable=True)
     platform_code = Column(Unicode, nullable=True)
@@ -479,26 +478,45 @@ class Transfer(Base):
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     from_stop_id = Column(Unicode, primary_key=True)
     to_stop_id = Column(Unicode, primary_key=True)
+    # Not null with default empty string to keep PostgreSQL happy
+    from_route_id = Column(Unicode, primary_key=True, nullable=False, default="")
+    to_route_id = Column(Unicode, primary_key=True, nullable=False, default="")
+    from_trip_id = Column(Unicode, primary_key=True, nullable=False, default="")
+    to_trip_id = Column(Unicode, primary_key=True, nullable=False, default="")
     transfer_type = Column(Integer, nullable=True)  # required; allowed empty
     min_transfer_time = Column(Integer, nullable=True)
 
     __table_args__ = (
-        ForeignKeyConstraint([feed_id, to_stop_id], [Stop.feed_id, Stop.stop_id]),
         ForeignKeyConstraint([feed_id, from_stop_id], [Stop.feed_id, Stop.stop_id]),
+        ForeignKeyConstraint([feed_id, to_stop_id], [Stop.feed_id, Stop.stop_id]),
     )
 
     stop_to = relationship(Stop, backref="transfers_to",
-            primaryjoin=and_(Stop.stop_id==foreign(to_stop_id),
-                             Stop.feed_id==feed_id))
+                           primaryjoin=and_(Stop.stop_id == foreign(to_stop_id),
+                                            Stop.feed_id == feed_id))
     stop_from = relationship(Stop, backref="transfers_from",
-            primaryjoin=and_(Stop.stop_id==foreign(from_stop_id),
-                             Stop.feed_id==feed_id))
+                             primaryjoin=and_(Stop.stop_id == foreign(from_stop_id),
+                                              Stop.feed_id == feed_id))
+    route_from = relationship(Route, backref="transfers_from",
+                              primaryjoin=and_(Route.route_id == foreign(from_route_id),
+                                               Route.feed_id == feed_id))
+    route_to = relationship(Route, backref="transfers_to",
+                            primaryjoin=and_(Route.route_id == foreign(to_route_id),
+                                             Route.feed_id == feed_id))
+    trip_from = relationship(Trip, backref="transfers_from",
+                             primaryjoin=and_(Trip.trip_id == foreign(from_trip_id),
+                                              Trip.feed_id == feed_id))
+    trip_to = relationship(Trip, backref="transfers_to",
+                           primaryjoin=and_(Trip.trip_id == foreign(to_trip_id),
+                                            Trip.feed_id == feed_id))
 
     _validate_transfer_type = _validate_int_choice([None, 0, 1, 2, 3],
                                                    'transfer_type')
 
     def __repr__(self):
-        return "<Transfer %s-%s>" % (self.from_stop_id, self.to_stop_id)
+        return "<Transfer from (%s, %s, %s) to (%s, %s, %s)>" % (self.from_stop_id, self.from_route_id,
+                                                                 self.from_trip_id, self.to_stop_id,
+                                                                 self.to_route_id, self.to_trip_id)
 
 
 class FeedInfo(Base):
