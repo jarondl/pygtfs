@@ -84,7 +84,7 @@ def _validate_float_none(*field_names):
     def is_float_none(self, key, value):
         try:
             return float(value)
-        except ValueError:
+        except (TypeError, ValueError):
             if value is None or value == "":
                 return None
             else:
@@ -206,7 +206,7 @@ class Route(Base):
         range(400, 406),
         [500],
         [600],
-        range(700, 717),
+        range(700, 718),
         [800],
         range(900, 907),
         range(1000, 1022),
