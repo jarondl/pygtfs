@@ -82,13 +82,9 @@ def _validate_float_range(float_min, float_max, *field_names):
 def _validate_float_none(*field_names):
     @validates(*field_names)
     def is_float_none(self, key, value):
-        try:
-            return float(value)
-        except ValueError:
-            if value is None or value == "":
-                return None
-            else:
-                raise
+        if value is None or value == "":
+            return None
+        return float(value)
     return is_float_none
 
 
