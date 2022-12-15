@@ -77,7 +77,8 @@ def append_feed(schedule, feed_filename, strip_fields=True,
             continue
         gtfs_table = gtfs_tables[gtfs_class]
 
-
+        skipped_records = 0
+        read_records = 0
         for i, record in enumerate(gtfs_table):
             if not record:
                 # Empty row.
@@ -85,16 +86,18 @@ def append_feed(schedule, feed_filename, strip_fields=True,
 
             try:
                 instance = gtfs_class(feed_id=feed_id, **record._asdict())
+                schedule.session.add(instance)
+                read_records += 1
             except:
-                print("Failure while writing {0}".format(record))
-                raise
-            schedule.session.add(instance)
+                skipped_records += 1
+                print(f"Failure while writing {record}")
+                # raise
             if i % chunk_size == 0 and i > 0:
                 schedule.session.flush()
                 sys.stdout.write('.')
                 sys.stdout.flush()
-        print('%d record%s read for %s.' % ((i+1), '' if i == 0 else 's',
-                                            gtfs_class))
+        print(f'{read_records} records read for {gtfs_class}')
+        print(f'{skipped_records} records skipped for {gtfs_class}')
     schedule.session.flush()
     schedule.session.commit()
     # load many to many relationships
