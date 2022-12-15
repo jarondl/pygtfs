@@ -1,17 +1,16 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
-from datetime import date
 import sys
+from datetime import date
 
 import six
-from sqlalchemy import and_
-from sqlalchemy.sql.expression import select, join
 
-from .gtfs_entities import (Feed, Service, ServiceException, gtfs_required,
+from . import feed
+from .exceptions import PygtfsException
+from .gtfs_entities import (Feed, gtfs_required,
                             Translation, Stop, Trip, ShapePoint, _stop_translations,
                             _trip_shapes, gtfs_calendar, gtfs_all)
-from . import feed
 
 
 def list_feeds(schedule):
@@ -46,7 +45,7 @@ def overwrite_feed(schedule, feed_filename, *args, **kwargs):
 
 
 def append_feed(schedule, feed_filename, strip_fields=True,
-                chunk_size=5000, agency_id_override=None):
+                chunk_size=5000, agency_id_override=None, ignore_failures=True):
 
     fd = feed.Feed(feed_filename, strip_fields)
 
@@ -91,7 +90,8 @@ def append_feed(schedule, feed_filename, strip_fields=True,
             except:
                 skipped_records += 1
                 print(f"Failure while writing {record}")
-                # raise
+                if not ignore_failures:
+                    raise
             if i % chunk_size == 0 and i > 0:
                 schedule.session.flush()
                 sys.stdout.write('.')
