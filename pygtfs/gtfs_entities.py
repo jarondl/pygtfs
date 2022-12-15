@@ -70,6 +70,8 @@ def _validate_int_choice(int_choice, *field_names):
 def _validate_float_range(float_min, float_max, *field_names):
     @validates(*field_names)
     def in_range(self, key, value):
+        if value is None:
+            return value
         float_value = float(value)
         if not (float_min <= float_value <= float_max):
             raise PygtfsValidationError(
@@ -507,7 +509,7 @@ class Transfer(Base):
                            primaryjoin=and_(Trip.trip_id == foreign(to_trip_id),
                                             Trip.feed_id == feed_id))
 
-    _validate_transfer_type = _validate_int_choice([None, 0, 1, 2, 3],
+    _validate_transfer_type = _validate_int_choice([None, 0, 1, 2, 3, 4, 5],
                                                    'transfer_type')
 
     def __repr__(self):

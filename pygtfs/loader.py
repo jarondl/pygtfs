@@ -20,7 +20,6 @@ def list_feeds(schedule):
 
 
 def delete_feed(schedule, feed_filename, interactive=False):
-
     feed_name = feed.derive_feed_name(feed_filename)
     feeds_with_name = schedule.session.query(Feed).filter(Feed.feed_name == feed_name).all()
     delete_all = not interactive
@@ -46,7 +45,6 @@ def overwrite_feed(schedule, feed_filename, *args, **kwargs):
 
 def append_feed(schedule, feed_filename, strip_fields=True,
                 chunk_size=5000, agency_id_override=None, ignore_failures=True):
-
     fd = feed.Feed(feed_filename, strip_fields)
 
     gtfs_tables = {}
