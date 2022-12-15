@@ -71,7 +71,7 @@ def _validate_float_range(float_min, float_max, *field_names):
     @validates(*field_names)
     def in_range(self, key, value):
         if value is None:
-            return value
+            return None
         float_value = float(value)
         if not (float_min <= float_value <= float_max):
             raise PygtfsValidationError(
@@ -330,7 +330,6 @@ class Trip(Base):
               primaryjoin=and_(foreign(service_id) == Service.service_id,
                                feed_id == Service.feed_id))
 
-
     _validate_direction_id = _validate_int_choice([None, 0, 1], 'direction_id')
     _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
                                                 'wheelchair_accessible')
@@ -545,7 +544,8 @@ _stop_translations = Table(
     Column('trans_id', Unicode),
     Column('lang', Unicode),
     ForeignKeyConstraint(['stop_feed_id', 'stop_id'], [Stop.feed_id, Stop.stop_id]),
-    ForeignKeyConstraint(['translation_feed_id', 'trans_id', 'lang'], [Translation.feed_id, Translation.trans_id, Translation.lang]),
+    ForeignKeyConstraint(['translation_feed_id', 'trans_id', 'lang'],
+                         [Translation.feed_id, Translation.trans_id, Translation.lang]),
 )
 
 
