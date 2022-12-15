@@ -61,7 +61,6 @@ class Feed(object):
         self.feed_name = derive_feed_name(filename)
         self.zf = None
         self.strip_fields = strip_fields
-        self.empty_to_none = True
         if not os.path.isdir(filename):
             self.zf = ZipFile(filename)
         if six.PY2:
@@ -102,9 +101,6 @@ class Feed(object):
             rows = (_row_stripper(row) for row in self.reader(filename))
         else:
             rows = self.reader(filename)
-        if self.empty_to_none:
-            # Set empty strings to None, let nullable handle missing values.
-            rows = ((x if x else None for x in row) for row in rows)
         feedtype = filename.rsplit('/')[-1].rsplit('.')[0].title().replace('_',
                                                                            '')
         return CSV(feedtype=feedtype, rows=rows, columns=columns)
