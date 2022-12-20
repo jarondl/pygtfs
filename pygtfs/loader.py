@@ -87,15 +87,15 @@ def append_feed(schedule, feed_filename, strip_fields=True,
                 read_records += 1
             except:
                 skipped_records += 1
-                print(f"Failure while writing {record}")
+                print("Failure while writing {}".format(record))
                 if not ignore_failures:
                     raise
             if i % chunk_size == 0 and i > 0:
                 schedule.session.flush()
                 sys.stdout.write('.')
                 sys.stdout.flush()
-        print(f'{read_records} records read for {gtfs_class}')
-        print(f'{skipped_records} records skipped for {gtfs_class}')
+        print('{0} records read for {1}'.format(read_records, gtfs_class))
+        print('{0} records skipped for {1}'.format(skipped_records, gtfs_class))
     schedule.session.flush()
     schedule.session.commit()
     # load many to many relationships
