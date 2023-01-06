@@ -71,23 +71,10 @@ def _validate_int_choice(int_choice, *field_names):
     return in_range
 
 
-def _validate_float_range(float_min, float_max, *field_names):
+def _validate_float_range(float_min, float_max, nullable, *field_names):
     @validates(*field_names)
     def in_range(self, key, value):
-        float_value = float(value)
-        if not (float_min <= float_value <= float_max):
-            raise PygtfsValidationError(
-                "{0} must be in range [{1}, {2}],"
-                " was {2}".format(key, float_min, float_max, value))
-        return float_value
-
-    return in_range
-
-
-def _validate_nullable_float_range(float_min, float_max, *field_names):
-    @validates(*field_names)
-    def in_range(self, key, value):
-        if value is None:
+        if nullable and value is None:
             return None
         float_value = float(value)
         if not (float_min <= float_value <= float_max):
@@ -166,8 +153,9 @@ class Stop(Base):
     stop_code = Column(Unicode, nullable=True, index=True)
     stop_name = Column(Unicode)
     stop_desc = Column(Unicode, nullable=True)
-    stop_lat = Column(Float, nullable=True)
-    stop_lon = Column(Float, nullable=True)
+    nullable_lat_long = True
+    stop_lat = Column(Float, nullable=nullable_lat_long)
+    stop_lon = Column(Float, nullable=nullable_lat_long)
     zone_id = Column(Unicode, nullable=True)
     stop_url = Column(Unicode, nullable=True)
     location_type = Column(Integer, nullable=True)
@@ -183,8 +171,8 @@ class Stop(Base):
     _validate_location = _validate_int_choice([None, 0, 1, 2, 3, 4], 'location_type')
     _validate_wheelchair = _validate_int_choice([None, 0, 1, 2],
                                                 'wheelchair_boarding')
-    _validate_lon_lat = _validate_nullable_float_range(-180, 180, 'stop_lon',
-                                                       'stop_lat')
+    _validate_lon_lat = _validate_float_range(-180, 180, nullable_lat_long,
+                                              'stop_lon', 'stop_lat')
 
     def __repr__(self):
         return '<Stop %s: %s>' % (self.stop_id, self.stop_name)
@@ -257,7 +245,7 @@ class ShapePoint(Base):
         Index('idx_shape_for_trips', feed_id, shape_id),
     )
 
-    _validate_lon_lat = _validate_float_range(-180, 180,
+    _validate_lon_lat = _validate_float_range(-180, 180, False,
                                               'shape_pt_lon', 'shape_pt_lat')
     _validate_shape_dist_traveled = _validate_float_none('shape_dist_traveled')
 
