@@ -236,6 +236,7 @@ class ShapePoint(Base):
     _plural_name_ = 'shapes'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
     shape_id = Column(Unicode, primary_key=True)
+    nullable_lat_long = False
     shape_pt_lat = Column(Float)
     shape_pt_lon = Column(Float)
     shape_pt_sequence = Column(Integer, primary_key=True)
@@ -245,7 +246,7 @@ class ShapePoint(Base):
         Index('idx_shape_for_trips', feed_id, shape_id),
     )
 
-    _validate_lon_lat = _validate_float_range(-180, 180, False,
+    _validate_lon_lat = _validate_float_range(-180, 180, nullable_lat_long,
                                               'shape_pt_lon', 'shape_pt_lat')
     _validate_shape_dist_traveled = _validate_float_none('shape_dist_traveled')
 
