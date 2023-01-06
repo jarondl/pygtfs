@@ -44,7 +44,7 @@ def overwrite_feed(schedule, feed_filename, *args, **kwargs):
 
 
 def append_feed(schedule, feed_filename, strip_fields=True,
-                chunk_size=5000, agency_id_override=None, ignore_failures=True):
+                chunk_size=5000, agency_id_override=None, ignore_failures=False):
     fd = feed.Feed(feed_filename, strip_fields)
 
     gtfs_tables = {}
