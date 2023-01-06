@@ -1,17 +1,16 @@
 from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
-from datetime import date
 import sys
+from datetime import date
 
 import six
-from sqlalchemy import and_
-from sqlalchemy.sql.expression import select, join
 
-from .gtfs_entities import (Feed, Service, ServiceException, gtfs_required,
+from . import feed
+from .exceptions import PygtfsException
+from .gtfs_entities import (Feed, gtfs_required,
                             Translation, Stop, Trip, ShapePoint, _stop_translations,
                             _trip_shapes, gtfs_calendar, gtfs_all)
-from . import feed
 
 
 def list_feeds(schedule):
@@ -21,7 +20,6 @@ def list_feeds(schedule):
 
 
 def delete_feed(schedule, feed_filename, interactive=False):
-
     feed_name = feed.derive_feed_name(feed_filename)
     feeds_with_name = schedule.session.query(Feed).filter(Feed.feed_name == feed_name).all()
     delete_all = not interactive
@@ -46,8 +44,7 @@ def overwrite_feed(schedule, feed_filename, *args, **kwargs):
 
 
 def append_feed(schedule, feed_filename, strip_fields=True,
-                chunk_size=5000, agency_id_override=None):
-
+                chunk_size=5000, agency_id_override=None, ignore_failures=False):
     fd = feed.Feed(feed_filename, strip_fields)
 
     gtfs_tables = {}
@@ -77,7 +74,8 @@ def append_feed(schedule, feed_filename, strip_fields=True,
             continue
         gtfs_table = gtfs_tables[gtfs_class]
 
-
+        skipped_records = 0
+        read_records = 0
         for i, record in enumerate(gtfs_table):
             if not record:
                 # Empty row.
@@ -85,16 +83,19 @@ def append_feed(schedule, feed_filename, strip_fields=True,
 
             try:
                 instance = gtfs_class(feed_id=feed_id, **record._asdict())
+                schedule.session.add(instance)
+                read_records += 1
             except:
-                print("Failure while writing {0}".format(record))
-                raise
-            schedule.session.add(instance)
+                skipped_records += 1
+                print("Failure while writing {}".format(record))
+                if not ignore_failures:
+                    raise
             if i % chunk_size == 0 and i > 0:
                 schedule.session.flush()
                 sys.stdout.write('.')
                 sys.stdout.flush()
-        print('%d record%s read for %s.' % ((i+1), '' if i == 0 else 's',
-                                            gtfs_class))
+        print('{0} records read for {1}'.format(read_records, gtfs_class))
+        print('{0} records skipped for {1}'.format(skipped_records, gtfs_class))
     schedule.session.flush()
     schedule.session.commit()
     # load many to many relationships
