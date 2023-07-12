@@ -89,6 +89,29 @@ def append_feed(schedule, feed_filename, strip_fields=True,
                 print("Failure while writing {0}".format(record))
                 raise
             schedule.session.add(instance)
+
+            if isinstance(instance, ServiceException):
+                service = schedule.session.execute(
+                    select(Service).where(Service.service_id == instance.service_id).where(Service.feed_id == feed_id)
+                ).one_or_none()
+                if service is None:
+                    # ServiceException was added for a day that has no associated regular service
+                    # Create a dummy service object for this service exception
+                    dummy = Service(
+                        feed_id=feed_id, 
+                        service_id=instance.service_id,
+                        monday='0',
+                        tuesday='0',
+                        wednesday='0',
+                        thursday='0',
+                        friday='0',
+                        saturday='0',
+                        sunday='0',
+                        start_date=instance.date.strftime('%Y%m%d'),
+                        end_date=instance.date.strftime('%Y%m%d'))
+                    schedule.session.add(dummy)
+                
+
             if i % chunk_size == 0 and i > 0:
                 schedule.session.flush()
                 sys.stdout.write('.')
