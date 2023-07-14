@@ -18,7 +18,7 @@ setup(
     url='https://github.com/jarondl/pygtfs',
     packages=find_packages(),
     install_requires=['sqlalchemy>=0.7.8',
-                      'pytz>=2012d',
+                      'pytz>=2014.9',
                       'six',
                       'docopt'
                       ],
