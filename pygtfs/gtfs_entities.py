@@ -357,10 +357,10 @@ class StopTime(Base):
     __tablename__ = 'stop_times'
     _plural_name_ = 'stop_times'
     feed_id = Column(Integer, ForeignKey('_feed.feed_id'), primary_key=True)
-    trip_id = Column(Unicode, primary_key=True)
+    trip_id = Column(Unicode, primary_key=True, index=True)
     arrival_time = Column(Interval)
     departure_time = Column(Interval)
-    stop_id = Column(Unicode, primary_key=True)
+    stop_id = Column(Unicode, primary_key=True, index=True)
     stop_sequence = Column(Integer, primary_key=True)
     stop_headsign = Column(Unicode)
     pickup_type = Column(Integer)
