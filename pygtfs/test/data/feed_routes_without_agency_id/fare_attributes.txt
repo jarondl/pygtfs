@@ -1,0 +1,4 @@
+fare_id,price,currency_type,payment_method,transfers,agency_id,transfer_duration
+OCAL3_2,   2.10000,EUR,1,0,Metro Bilbao,
+OCAL3_3,   2.15000,EUR,1,0,Metro Bilbao,
+OCAL3_1,   1.90000,EUR,1,0,Metro Bilbao,
