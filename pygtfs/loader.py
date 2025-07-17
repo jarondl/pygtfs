@@ -2,6 +2,7 @@ from __future__ import (division, absolute_import, print_function,
                         unicode_literals)
 
 from datetime import date
+import logging
 import sys
 
 import six
@@ -12,6 +13,8 @@ from .gtfs_entities import (Feed, Service, ServiceException, gtfs_required,
                             Translation, Stop, Trip, ShapePoint, _stop_translations,
                             _trip_shapes, gtfs_calendar, gtfs_all)
 from . import feed
+
+logger = logging.getLogger(__name__)
 
 
 def list_feeds(schedule):
@@ -28,6 +31,7 @@ def delete_feed(schedule, feed_filename, interactive=False):
     for matching_feed in feeds_with_name:
         if not delete_all:
             print("Found feed ({0.feed_id}) named {0.feed_name} loaded on {0.feed_append_date}".format(matching_feed))
+            logger.info("Found feed ({0.feed_id}) named {0.feed_name} loaded on {0.feed_append_date}".format(matching_feed))
             ans = ""
             while ans not in ("K", "O", "A"):
                 ans = six.moves.input("(K)eep / (O)verwrite / overwrite (A)ll ? ").upper()
@@ -53,6 +57,7 @@ def append_feed(schedule, feed_filename, strip_fields=True,
     gtfs_tables = {}
     for gtfs_class in gtfs_all:
         print('Loading GTFS data for %s:' % gtfs_class)
+        logger.info('Loading GTFS data for %s:' % gtfs_class)
         gtfs_filename = gtfs_class.__tablename__ + '.txt'
 
         try:
@@ -87,6 +92,7 @@ def append_feed(schedule, feed_filename, strip_fields=True,
                 instance = gtfs_class(feed_id=feed_id, **record._asdict())
             except:
                 print("Failure while writing {0}".format(record))
+                logger.error("Failure while writing {0}".format(record))
                 raise
             schedule.session.add(instance)
 
@@ -98,7 +104,7 @@ def append_feed(schedule, feed_filename, strip_fields=True,
                     # ServiceException was added for a day that has no associated regular service
                     # Create a dummy service object for this service exception
                     dummy = Service(
-                        feed_id=feed_id, 
+                        feed_id=feed_id,
                         service_id=instance.service_id,
                         monday='0',
                         tuesday='0',
@@ -110,7 +116,6 @@ def append_feed(schedule, feed_filename, strip_fields=True,
                         start_date=instance.date.strftime('%Y%m%d'),
                         end_date=instance.date.strftime('%Y%m%d'))
                     schedule.session.add(dummy)
-                
 
             if i % chunk_size == 0 and i > 0:
                 schedule.session.flush()
@@ -118,11 +123,14 @@ def append_feed(schedule, feed_filename, strip_fields=True,
                 sys.stdout.flush()
         print('%d record%s read for %s.' % ((i+1), '' if i == 0 else 's',
                                             gtfs_class))
+        logger.info('%d record%s read for %s.' % ((i+1), '' if i == 0 else 's',
+                                            gtfs_class))
     schedule.session.flush()
     schedule.session.commit()
     # load many to many relationships
     if Translation in gtfs_tables:
         print('Mapping translations to stops')
+        logger.info('Mapping translations to stops')
         q = (schedule.session.query(
                 Stop.feed_id.label('stop_feed_id'),
                 Translation.feed_id.label('translation_feed_id'),
@@ -138,6 +146,7 @@ def append_feed(schedule, feed_filename, strip_fields=True,
         schedule.session.execute(upd)
     if ShapePoint in gtfs_tables:
         print('Mapping shapes to trips')
+        logger.info('Mapping shapes to trips')
         q = (schedule.session.query(
                 Trip.feed_id.label('trip_feed_id'),
                 ShapePoint.feed_id.label('shape_feed_id'),
@@ -154,4 +163,5 @@ def append_feed(schedule, feed_filename, strip_fields=True,
     schedule.session.commit()
 
     print('Complete.')
+    logger.info('Complete.')
     return schedule
