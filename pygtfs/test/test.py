@@ -1,15 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
-
 import datetime
 import os.path
-
-# use unittest2 for Python2.6 compatibility.
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import unittest
 
 from pygtfs import overwrite_feed
 from pygtfs import Schedule

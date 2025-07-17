@@ -6,9 +6,6 @@ when possible relations are taken into account, e.g. a :py:class:`Route` class
 has a `trips` attribute, with a list of trips for the specific route.
 """
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
-
 import datetime
 
 from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, and_, Table, Index

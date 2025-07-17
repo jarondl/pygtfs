@@ -36,9 +36,6 @@ Description:
 """
 
 
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
-
 from docopt import docopt
 
 from . import __version__, append_feed, delete_feed, overwrite_feed, list_feeds

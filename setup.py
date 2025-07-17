@@ -19,7 +19,6 @@ setup(
     packages=find_packages(),
     install_requires=['sqlalchemy>=0.7.8',
                       'pytz>=2014.9',
-                      'six',
                       'docopt'
                       ],
     tests_require=['nose'],
@@ -30,8 +29,6 @@ setup(
     classifiers=[
         "Operating System :: OS Independent",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
