@@ -25,6 +25,8 @@ Base = declarative_base()
 def _validate_date(*field_names):
     @validates(*field_names)
     def make_date(self, key, value):
+        if value is None or value == "":
+            return None
         return datetime.datetime.strptime(value, '%Y%m%d').date()
     return make_date
 
