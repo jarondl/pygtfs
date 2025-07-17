@@ -112,7 +112,7 @@ class TestSchedule(unittest.TestCase):
         with self.assertRaises(ValueError):
             t.bikes_allowed = -1
         self.assertEqual(t.bikes_allowed, 2)
-    
+
     def test_query_methods(self):
         """
             Test that the object query getters return
@@ -123,6 +123,19 @@ class TestSchedule(unittest.TestCase):
         self.assertEqual(isinstance(self.schedule.agencies_query, Query),
                          True)
 
+class TestIgnoreFiles(unittest.TestCase):
+    def setUp(self):
+        self.schedule = Schedule(":memory:")
+        data_location = os.path.join(os.path.dirname(__file__),
+                                     "data", "sample_feed")
+        overwrite_feed(self.schedule, data_location, ignore_files="routes.txt")
+
+    def test_routes(self):
+        self.assertFalse(self.schedule.routes)
+
+    def test_services(self):
+        ser = [service.service_id for service in self.schedule.services]
+        self.assertEqual(ser, ["FULLW", "WE"])
 
 if __name__ == '__main__':
     unittest.main()
