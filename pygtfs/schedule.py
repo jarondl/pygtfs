@@ -1,6 +1,3 @@
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
-
 import sqlalchemy
 import sqlalchemy.orm
 
@@ -88,4 +85,5 @@ for entity in (gtfs_all + [Feed]):
     setattr(Schedule, entity._plural_name_ + "_query",
             _meta_query_raw(entity, entity_raw_doc))
     if hasattr(entity, 'id'):
-        setattr(Schedule, entity._plural_name_ + "_by_id", _meta_query_by_id(entity, entity_by_id_doc))    
+        setattr(Schedule, entity._plural_name_ + "_by_id", _meta_query_by_id(entity, entity_by_id_doc))
+

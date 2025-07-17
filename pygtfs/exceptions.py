@@ -1,6 +1,3 @@
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
-
 class PygtfsException(Exception):
     """ A Base class for all pygtfs exceptions """
     pass

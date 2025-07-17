@@ -1,11 +1,7 @@
-from __future__ import (division, absolute_import, print_function,
-                        unicode_literals)
-
 from datetime import date
 import logging
 import sys
 
-import six
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import select, join
 
@@ -34,7 +30,7 @@ def delete_feed(schedule, feed_filename, interactive=False):
             logger.info("Found feed ({0.feed_id}) named {0.feed_name} loaded on {0.feed_append_date}".format(matching_feed))
             ans = ""
             while ans not in ("K", "O", "A"):
-                ans = six.moves.input("(K)eep / (O)verwrite / overwrite (A)ll ? ").upper()
+                ans = input("(K)eep / (O)verwrite / overwrite (A)ll ? ").upper()
             if ans == "K":
                 continue
             if ans == "A":

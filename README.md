@@ -29,8 +29,6 @@ Dependencies
   code; the [documentation](http://docs.sqlalchemy.org/) is pretty solid. 
 - [pytz](http://pytz.sourceforge.net/) 2012d. A few GTFS fields are expected
   to be in a [tz time zone format](http://en.wikipedia.org/wiki/List_of_tz_database_time_zones). 
-- [six](http://pythonhosted.org/six/). Used in order to support python2 and
-  python3 in a single code base.
 - [docopt](http://docopt.org/). Pythonic command line arguments parser, that
   will make you smile
 
