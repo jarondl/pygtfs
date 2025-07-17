@@ -50,15 +50,20 @@ def overwrite_feed(schedule, feed_filename, *args, **kwargs):
 
 
 def append_feed(schedule, feed_filename, strip_fields=True,
-                chunk_size=5000, agency_id_override=None):
+                chunk_size=5000, agency_id_override=None, ignore_files=()):
 
     fd = feed.Feed(feed_filename, strip_fields)
 
     gtfs_tables = {}
     for gtfs_class in gtfs_all:
+        gtfs_filename = gtfs_class.__tablename__ + '.txt'
+
+        if gtfs_filename in ignore_files:
+            logger.info("ignoring file %s as requested" % gtfs_filename)
+            continue
+
         print('Loading GTFS data for %s:' % gtfs_class)
         logger.info('Loading GTFS data for %s:' % gtfs_class)
-        gtfs_filename = gtfs_class.__tablename__ + '.txt'
 
         try:
             # We ignore the feed supplied feed id, because we create our own
@@ -71,6 +76,7 @@ def append_feed(schedule, feed_filename, strip_fields=True,
 
     if len(set(gtfs_tables) & gtfs_calendar) == 0:
         raise PygtfsException('Must have Calendar.txt or Calendar_dates.txt')
+
 
     # create new feed
     feed_entry = Feed(feed_name=fd.feed_name, feed_append_date=date.today())
