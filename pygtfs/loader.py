@@ -5,7 +5,7 @@ import sys
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import select, join
 
-from .gtfs_entities import (Feed, Service, ServiceException, gtfs_required,
+from .gtfs_entities import (Feed, Service, Agency, Route, ServiceException, gtfs_required,
                             Translation, Stop, Trip, ShapePoint, _stop_translations,
                             _trip_shapes, gtfs_calendar, gtfs_all)
 from . import feed
@@ -79,6 +79,7 @@ def append_feed(schedule, feed_filename, strip_fields=True,
     schedule.session.add(feed_entry)
     schedule.session.flush()
     feed_id = feed_entry.feed_id
+    n_agencies, agency_id = 0, None
     for gtfs_class in gtfs_all:
         if gtfs_class not in gtfs_tables:
             continue
@@ -89,9 +90,17 @@ def append_feed(schedule, feed_filename, strip_fields=True,
             if not record:
                 # Empty row.
                 continue
-
+            if gtfs_class == Agency:
+                # agency_id on routes.txt is only required if multiple agencies are defined in agency.txt
+                # instead of leaving agency_id as None, we set it to the first agency_id in case there is only one agency (univocal)
+                n_agencies += 1
+                if i == 0:
+                    agency_id = record._asdict()['agency_id']
             try:
-                instance = gtfs_class(feed_id=feed_id, **record._asdict())
+                if gtfs_class == Route and not record._asdict().get('agency_id') and n_agencies == 1 :
+                    instance = gtfs_class(feed_id=feed_id, agency_id=agency_id, **record._asdict())
+                else:
+                    instance = gtfs_class(feed_id=feed_id, **record._asdict())
             except:
                 print("Failure while writing {0}".format(record))
                 logger.error("Failure while writing {0}".format(record))

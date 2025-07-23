@@ -1,0 +1,2 @@
+route_id,route_short_name,route_long_name,route_type,route_color
+MB,"",Línea De Metro Bilbao,1,FF6505
