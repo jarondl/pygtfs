@@ -2,10 +2,14 @@
 
 import datetime
 import os.path
+import tempfile
 import unittest
+from pathlib import Path
+from zipfile import ZipFile
 
 from pygtfs import overwrite_feed
 from pygtfs import Schedule
+from pygtfs.feed import Feed, derive_feed_name
 
 from sqlalchemy.orm import Query
 
@@ -129,6 +133,43 @@ class TestIgnoreFiles(unittest.TestCase):
     def test_services(self):
         ser = [service.service_id for service in self.schedule.services]
         self.assertEqual(ser, ["FULLW", "WE"])
+
+
+class TestPathInputs(unittest.TestCase):
+    def setUp(self):
+        self.data_location = Path(os.path.dirname(__file__)) / "data" / "sample_feed"
+
+    def test_derive_feed_name_accepts_path(self):
+        self.assertEqual(derive_feed_name(self.data_location), "sample_feed")
+        self.assertEqual(derive_feed_name(Path("/tmp/caltrain-ca-us.zip")),
+                         "caltrain-ca-us.zip")
+
+    def test_feed_accepts_path_for_directory_inputs(self):
+        agency_rows = Feed(self.data_location).reader("agency.txt")
+        self.assertEqual(next(agency_rows)[0], "agency_id")
+
+    def test_feed_accepts_path_for_zip_file_inputs(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            zip_path = Path(temp_dir) / "sample_feed.zip"
+            with ZipFile(zip_path, "w") as zip_file:
+                for feed_file in self.data_location.iterdir():
+                    zip_file.write(feed_file, arcname=feed_file.name)
+
+            feed = Feed(zip_path)
+            agency_rows = feed.reader("agency.txt")
+
+            self.assertEqual(feed.feed_name, "sample_feed.zip")
+            self.assertEqual(next(agency_rows)[0], "agency_id")
+
+    def test_feed_handles_trailing_slash_in_directory_path(self):
+        path_with_trailing_slash = "{0}/".format(self.data_location)
+        feed = Feed(path_with_trailing_slash)
+        # the feed still opens as a directory-backed feed:
+        agency_rows = feed.reader("agency.txt")
+
+        self.assertEqual(feed.feed_name, "sample_feed")
+        self.assertEqual(next(agency_rows)[0], "agency_id")
+
 
 if __name__ == '__main__':
     unittest.main()

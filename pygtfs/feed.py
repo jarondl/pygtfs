@@ -51,13 +51,13 @@ class Feed(object):
     or loose in a folder."""
 
     def __init__(self, filename, strip_fields=True):
-        self.filename = filename
-        self.feed_name = derive_feed_name(filename)
+        self.filename = os.fspath(filename)
+        self.feed_name = derive_feed_name(self.filename)
         self.zf = None
         self.strip_fields = strip_fields
         self.empty_to_none = True
-        if not os.path.isdir(filename):
-            self.zf = ZipFile(filename)
+        if not os.path.isdir(self.filename):
+            self.zf = ZipFile(self.filename)
 
     def __repr__(self):
         return '<Feed %s>' % self.filename
@@ -88,4 +88,4 @@ class Feed(object):
 
 
 def derive_feed_name(filename):
-    return os.path.basename(filename.rstrip('/'))
+    return os.path.basename(os.path.normpath(os.fspath(filename)))
