@@ -1,0 +1,2 @@
+agency_id,agency_name,agency_url,agency_timezone,agency_lang,agency_phone
+Metro Bilbao,Metro Bilbao,http://www.metrobilbao.eus,Europe/Madrid,ES,+34 94 425 40 25

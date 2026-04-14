@@ -1,0 +1,7 @@
+service_id,date,exception_type
+invd_25.pex,20250330,2
+fu1830hinvd_25.pex,20250330,1
+invl_25.pex,20250421,2
+festinvl_25.pex,20250421,1
+invl_25.pex,20250430,2
+invv_25.pex,20250430,1
